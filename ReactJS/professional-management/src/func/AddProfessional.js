@@ -368,9 +368,7 @@ function AddProfessional() {
         <thead>
           <tr>
             <th>Id</th>
-            <th>Nombres</th>
-            <th>Apellido Paterno</th>
-            <th>Apellido Materno</th>
+            <th>A.Paterno A.Materno Nombres</th>
             <th>Años de Experiencia</th>
             <th>Nivel de Experiencia</th>
             <th>Habilidades</th>
@@ -418,9 +416,7 @@ function AddProfessional() {
             .map((prof, index) => (
               <tr key={index}>
                 <td>{prof.id || "N/A"}</td>
-                <td>{prof.nombres}</td>
-                <td>{prof.apaterno || "N/A"}</td>
-                <td>{prof.amaterno || "N/A"}</td>
+                <td>{prof.apaterno || "N/A"} {prof.amaterno || "N/A"} {prof.nombres}</td>
                 <td>{prof.anioExperiencia || "N/A"}</td>
                 <td>{prof.nivelExperiencia || "No Asignado"}</td>
 

@@ -77,7 +77,7 @@ function App() {
         Junior: data.filter((prof) => prof.nivelExperiencia === "Junior")
           .length,
         Semisenior: data.filter(
-          (prof) => prof.nivelExperiencia === "Semi senior"
+          (prof) => prof.nivelExperiencia === "Semisenior"
         ).length,
         Senior: data.filter((prof) => prof.nivelExperiencia === "Senior")
           .length,
@@ -138,7 +138,7 @@ function App() {
 
   // Gráfico de barras de nivel de experiencia
   const barChartData = {
-    labels: ["Junior", "Semi senior", "Senior"],
+    labels: ["Junior", "Semisenior", "Senior"],
     datasets: [
       {
         label: "Distribución por Nivel de Experiencia",

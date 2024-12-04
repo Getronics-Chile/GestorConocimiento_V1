@@ -190,8 +190,8 @@ function AddProfessional() {
   return (
     <div>
       <h1>Gestión de Profesionales</h1>
-
-
+      <hr></hr>
+      <h4>Información personal del profesional</h4>
 
       <form
         className="row g-3 mb-4"
@@ -272,13 +272,13 @@ function AddProfessional() {
           >
             <option value="">Selecciona un Nivel de Experiencia</option>
             <option value="Junior">Junior</option>
-            <option value="Semi senior">Semi senior</option>
+            <option value="Semisenior">Semi senior</option>
             <option value="Senior">Senior</option>
           </select>
         </div>
 
         {/* Campos para habilidades */}
-        <h3>Habilidades</h3>
+        <h4>Habilidades del profesional</h4>
         <div className="col-md-6">
           <select
             className="form-select"
@@ -349,6 +349,9 @@ function AddProfessional() {
           </button>
         </div>
       </form>
+
+      <hr></hr>
+      <h4>Lista de profesionales</h4>
 
       {/* Lista de profesionales con búsqueda */}
       <div className="search-wrapper">
@@ -454,6 +457,10 @@ function AddProfessional() {
             ))}
         </tbody>
       </table>
+
+      <button className="btn button-primary mb-3" onClick={exportToPDF}>
+        <i class="fa fa-download" aria-hidden="true"></i> Exportar a PDF
+      </button>
 
       {/* Paginación */}
       <ReactPaginate

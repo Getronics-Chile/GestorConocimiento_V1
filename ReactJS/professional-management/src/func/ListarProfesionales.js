@@ -1,38 +1,22 @@
+// AddProfessional.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import "../../node_modules/font-awesome/css/font-awesome.min.css";
-import ReactPaginate from "react-paginate"; // Importamos la librería de paginación
+import ReactPaginate from "react-paginate";
 
 const APIURL = "http://localhost:8000";
 
 function AddProfessional() {
   const [profesionales, setProfesionales] = useState([]);
-  const [newProfessional, setNewProfessional] = useState({
-    nombres: "",
-    apaterno: "",
-    amaterno: "",
-    anioExperiencia: "",
-    nivelExperiencia: "",
-    habilidadesProfesional: [],
-    idiomasProfesional: [],
-    formacionAcademicaProfesional: [],
-  });
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [newHabilidad, setNewHabilidad] = useState({
-    habilidadTecnologica: "",
-    nivelCompetencia: "",
-  });
-
-  const [habilidades, setHabilidades] = useState([]);
   const [currentPage, setCurrentPage] = useState(0); // Página actual
   const [itemsPerPage] = useState(5); // Número de elementos por página
+  const [selectedRows, setSelectedRows] = useState([]); // Filas seleccionadas
 
   useEffect(() => {
     getProfessionals();
-    getHabilidades();
   }, []);
 
   const exportToPDF = () => {
@@ -56,60 +40,6 @@ function AddProfessional() {
     }
   };
 
-  const addHabilidad = () => {
-    if (newHabilidad.habilidadTecnologica && newHabilidad.nivelCompetencia) {
-      setNewProfessional((prevState) => ({
-        ...prevState,
-        habilidadesProfesional: [
-          ...prevState.habilidadesProfesional,
-          newHabilidad,
-        ],
-      }));
-      setNewHabilidad({ habilidadTecnologica: "", nivelCompetencia: "" });
-    } else {
-      alert("Completa los campos de habilidad antes de agregar.");
-    }
-  };
-
-  const getHabilidades = async () => {
-    try {
-      const response = await axios.get(
-        `${APIURL}/api/habilidadesTecnologicas/listarTodas`
-      );
-      setHabilidades(response.data);
-    } catch (error) {
-      console.error("Error al obtener habilidades:", error);
-    }
-  };
-
-  const addProfessional = async () => {
-    try {
-      const professionalData = { ...newProfessional };
-
-      console.log("Datos enviados al backend:", professionalData);
-
-      await axios.post(`${APIURL}/api/profesional/crear`, professionalData, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      alert("Profesional agregado exitosamente");
-      setNewProfessional({
-        nombres: "",
-        apaterno: "",
-        amaterno: "",
-        anioExperiencia: "",
-        nivelExperiencia: "",
-        habilidadesProfesional: [],
-        idiomasProfesional: [],
-        formacionAcademicaProfesional: [],
-      });
-      getProfessionals();
-    } catch (error) {
-      console.error("Error al agregar profesional:", error);
-      alert("Error al agregar profesional.");
-    }
-  };
-
   const deleteProfessional = async (id) => {
     if (!id) {
       alert("ID no válido");
@@ -117,15 +47,9 @@ function AddProfessional() {
     }
 
     try {
-      const response = await axios.delete(
-        `${APIURL}/api/profesional/eliminar/${id}`,
-        {
-          headers: {
-            Accept: "*/*",
-          },
-        }
-      );
-      console.log(response.data);
+      await axios.delete(`${APIURL}/api/profesional/eliminar/${id}`, {
+        headers: { Accept: "*/*" },
+      });
       alert("Profesional eliminado exitosamente");
       getProfessionals();
     } catch (error) {
@@ -137,12 +61,21 @@ function AddProfessional() {
     }
   };
 
+  // Manejar cambio de página
   const handlePageClick = (event) => {
     setCurrentPage(event.selected);
   };
 
-  const indexOfLastProfessional = (currentPage + 1) * itemsPerPage;
-  const indexOfFirstProfessional = indexOfLastProfessional - itemsPerPage;
+  // Manejar selección de filas
+  const toggleRowSelection = (id) => {
+    setSelectedRows((prevSelected) =>
+      prevSelected.includes(id)
+        ? prevSelected.filter((rowId) => rowId !== id)
+        : [...prevSelected, id]
+    );
+  };
+
+  // Filtrar y paginar profesionales
   const filteredProfessionals = profesionales.filter((prof) => {
     const searchLowerCase = searchTerm.toLowerCase();
 
@@ -156,6 +89,7 @@ function AddProfessional() {
       ? prof.anioExperiencia.toString()
       : "";
 
+    // Verificar coincidencias en habilidadesProfesional
     const habilidadesMatch =
       prof.habilidadesProfesional &&
       Array.isArray(prof.habilidadesProfesional) &&
@@ -165,16 +99,37 @@ function AddProfessional() {
           .includes(searchLowerCase)
       );
 
+    // Verificar coincidencias en formación académica
+    const formacionMatch =
+      prof.formacionAcademicaProfesional &&
+      Array.isArray(prof.formacionAcademicaProfesional) &&
+      prof.formacionAcademicaProfesional.some((formacion) =>
+        (formacion.carrera || "").toLowerCase().includes(searchLowerCase)
+      );
+
+    // Verificar coincidencias en idiomas
+    const idiomasMatch =
+      prof.idiomasProfesional &&
+      Array.isArray(prof.idiomasProfesional) &&
+      prof.idiomasProfesional.some((idioma) =>
+        (idioma.nombre || "").toLowerCase().includes(searchLowerCase)
+      );
+
+    // Verificar coincidencias en los campos del profesional
     return (
       nombres.includes(searchLowerCase) ||
       apaterno.includes(searchLowerCase) ||
       amaterno.includes(searchLowerCase) ||
       anioExperiencia.includes(searchLowerCase) ||
       nivelExperiencia.includes(searchLowerCase) ||
-      habilidadesMatch
+      habilidadesMatch ||
+      formacionMatch ||
+      idiomasMatch
     );
   });
 
+  const indexOfLastProfessional = (currentPage + 1) * itemsPerPage;
+  const indexOfFirstProfessional = indexOfLastProfessional - itemsPerPage;
   const currentProfessionals = filteredProfessionals.slice(
     indexOfFirstProfessional,
     indexOfLastProfessional
@@ -182,64 +137,101 @@ function AddProfessional() {
 
   return (
     <div>
-      <h1>Gestión de Profesionales</h1>
+      <h1>Lista de Profesionales</h1>
+      <hr></hr>
 
-      <button className="btn button-primary mb-3" onClick={exportToPDF}>
-        <i className="fa fa-download" aria-hidden="true"></i> Exportar a PDF
-      </button>
-
-      {/* Formulario de profesionales aquí */}
-      {/* ... */}
-
+      {/* Búsqueda */}
       <div className="search-wrapper">
         <input
           type="text"
           className="search-input"
-          placeholder="Buscar por campo"
+          placeholder="Buscar por campo, formación académica o idiomas"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
+      {/* Tabla de profesionales */}
       <table className="table table-striped" id="professionalTable">
         <thead>
           <tr>
+            <th>Seleccionar</th>
             <th>Id</th>
-            <th>Nombres</th>
-            <th>Apellido Paterno</th>
-            <th>Apellido Materno</th>
+            <th>A.Paterno A.Materno Nombres</th>
             <th>Años de Experiencia</th>
             <th>Nivel de Experiencia</th>
             <th>Habilidades</th>
+            <th>Formación Académica</th>
+            <th>Idiomas</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {currentProfessionals.map((prof, index) => (
-            <tr key={index}>
-              <td>{prof.id || "N/A"}</td>
-              <td>{prof.nombres}</td>
-              <td>{prof.apaterno || "N/A"}</td>
-              <td>{prof.amaterno || "N/A"}</td>
-              <td>{prof.anioExperiencia || "N/A"}</td>
-              <td>{prof.nivelExperiencia || "N/A"}</td>
+          {currentProfessionals.map((prof) => (
+            <tr key={prof.id}>
               <td>
-                {prof.habilidadesProfesional.length > 0 ? (
-                  prof.habilidadesProfesional.map((habilidad, i) => (
-                    <div key={i}>
-                      {habilidad.habilidadTecnologica}
-                    </div>
-                  ))
+                <input
+                  type="checkbox"
+                  checked={selectedRows.includes(prof.id)}
+                  onChange={() => toggleRowSelection(prof.id)}
+                />
+              </td>
+              <td>{prof.id || "N/A"}</td>
+              <td>
+                {prof.apaterno || "N/A"} {prof.amaterno || "N/A"}{" "}
+                {prof.nombres}
+              </td>
+              <td>{prof.anioExperiencia || "N/A"}</td>
+              <td>{prof.nivelExperiencia || "No Asignado"}</td>
+              <td>
+                {prof.habilidadesProfesional &&
+                Array.isArray(prof.habilidadesProfesional) ? (
+                  <ul>
+                    {prof.habilidadesProfesional.map((habilidad) => (
+                      <li key={habilidad.id}>
+                        {habilidad.habilidadTecnologica} (
+                        {habilidad.nivelCompetencia})
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
-                  "N/A"
+                  "No Asignado"
+                )}
+              </td>
+              <td>
+                {prof.formacionAcademicaProfesional &&
+                Array.isArray(prof.formacionAcademicaProfesional) ? (
+                  <ul>
+                    {prof.formacionAcademicaProfesional.map((formacion) => (
+                      <li key={formacion.id}>
+                        {formacion.carrera} - {formacion.institucion}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  "No Asignado"
+                )}
+              </td>
+              <td>
+                {prof.idiomasProfesional &&
+                Array.isArray(prof.idiomasProfesional) ? (
+                  <ul>
+                    {prof.idiomasProfesional.map((idioma) => (
+                      <li key={idioma.id}>
+                        {idioma.nombre} ({idioma.nivelDominio})
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  "No Asignado"
                 )}
               </td>
               <td>
                 <button
+                  className="btn btn-outline-danger"
                   onClick={() => deleteProfessional(prof.id)}
-                  className="btn btn-danger"
                 >
-                  Eliminar
+                  <i className="fa fa-trash" aria-hidden="true"></i> Eliminar
                 </button>
               </td>
             </tr>
@@ -247,14 +239,19 @@ function AddProfessional() {
         </tbody>
       </table>
 
+      {/* Paginación */}
       <ReactPaginate
-        previousLabel={"< Anterior"}
-        nextLabel={"Siguiente >"}
+        previousLabel={"Anterior"}
+        nextLabel={"Siguiente"}
         pageCount={Math.ceil(filteredProfessionals.length / itemsPerPage)}
         onPageChange={handlePageClick}
         containerClassName={"pagination"}
         activeClassName={"active"}
       />
+
+      <button className="btn button-primary mb-3" onClick={exportToPDF}>
+        <i className="fa fa-download" aria-hidden="true"></i> Exportar a PDF
+      </button>
     </div>
   );
 }

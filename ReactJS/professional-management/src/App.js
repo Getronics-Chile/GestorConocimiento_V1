@@ -16,8 +16,9 @@ import {
 import axios from "axios";
 
 import "./App.css";
-import AddProfessional from "./func/AddProfessional"; // Componente de Profesionales
+import AddProfessional from "./func/AgregarProfesional"; // Componente de Profesionales
 import AddHabilidadesTecnologicas from "./func/AddHabilidadesTecnologicas"; // Componente de Habilidades
+import ListProfessional from "./func/ListarProfesionales"; // Componente de Habilidades
 import Idiomas from "./func/Idiomas"; // Componente de Idiomas
 import ChartDataLabels from "chartjs-plugin-datalabels"; // Importa el plugin de datalabels
 
@@ -48,9 +49,8 @@ function App() {
 
   useEffect(() => {
     const date = new Date();
-    const formattedDate = `${date.getDate()}/${
-      date.getMonth() + 1
-    }/${date.getFullYear()}`;
+    const formattedDate = `${date.getDate()}/${date.getMonth() + 1
+      }/${date.getFullYear()}`;
     setCurrentDate(formattedDate);
 
     // Obtener las estadísticas
@@ -171,7 +171,7 @@ function App() {
       },
     ],
   };
-  
+
 
   // Configuración del gráfico de torta con etiquetas de porcentaje
   const pieChartOptions = {
@@ -194,7 +194,17 @@ function App() {
       },
     },
   };
-  
+
+  const [isProfesionalesOpen, setProfesionalesOpen] = useState(false);
+  const [isSidebarMinimized, setSidebarMinimized] = useState(false);
+
+  const toggleProfesionales = () => {
+    setProfesionalesOpen(!isProfesionalesOpen);
+  };
+
+  const toggleSidebar = () => {
+    setSidebarMinimized(!isSidebarMinimized);
+  };
 
   return (
     <div>
@@ -207,7 +217,10 @@ function App() {
       {/* Sidebar */}
       <Router>
         <div className="d-flex">
-          <div className="sidebar">
+          <div className={`sidebar ${isSidebarMinimized ? "minimized" : ""}`}>
+            <button className="toggle-btn" onClick={toggleSidebar}>
+              {isSidebarMinimized ? ">" : "<"}
+            </button>
             <ul>
               <li>
                 <Link to="/">
@@ -215,15 +228,33 @@ function App() {
                 </Link>
               </li>
               <li>
-                <Link to="/profesionales">
-                  <i className="fa fa-users" aria-hidden="true"></i>{" "}
-                  Profesionales
+                <Link to="#" onClick={toggleProfesionales}>
+                  <i className="fa fa-users" aria-hidden="true"></i> Profesionales
+                  <i className={`fa fa-chevron-${isProfesionalesOpen ? "up" : "down"}`} aria-hidden="true"></i>
                 </Link>
+                {isProfesionalesOpen && (
+                  <ul className="sublist">
+                    <li>
+                      <Link to="/profesionales/listar">
+                        <i className="fa fa-list" aria-hidden="true"></i> Listar Profesionales
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/profesionales/agregar">
+                        <i className="fa fa-plus" aria-hidden="true"></i> Agregar Profesional
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/profesionales/modificar">
+                        <i className="fa fa-edit" aria-hidden="true"></i> Modificar Profesional
+                      </Link>
+                    </li>
+                  </ul>
+                )}
               </li>
               <li>
                 <Link to="/habilidades">
-                  <i className="fa fa-desktop" aria-hidden="true"></i>{" "}
-                  Habilidades
+                  <i className="fa fa-desktop" aria-hidden="true"></i> Habilidades
                 </Link>
               </li>
               <li>
@@ -278,7 +309,8 @@ function App() {
                   </div>
                 }
               />
-              <Route path="/profesionales" element={<AddProfessional />} />
+              <Route path="/profesionales/agregar" element={<AddProfessional />} />
+              <Route path="/profesionales/listar" element={<ListProfessional />} />
               <Route
                 path="/habilidades"
                 element={<AddHabilidadesTecnologicas />}

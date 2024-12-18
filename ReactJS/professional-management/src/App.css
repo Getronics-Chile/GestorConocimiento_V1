@@ -100,6 +100,22 @@ body {
   border-radius: 5px;
 }
 
+.sublist {
+  display: flex;
+  flex-direction: column;
+  align-items:flex-end;
+}
+
+.sublist i{
+  color: white;
+  font-size: 16px !important;
+}
+
+.sublist a{
+  color: white;
+  font-size: 16px !important;
+}
+
 .sidebar ul li a:hover {
   background-color: #00c853; /* Verde claro */
   color: white;

@@ -8,6 +8,7 @@ function AddHabilidadesTecnologicas() {
   const [newHabilidad, setNewHabilidad] = useState({
     nombre: "",
     categoria: "",
+    descripcion: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -23,7 +24,7 @@ function AddHabilidadesTecnologicas() {
 
   // Agregar una nueva habilidad
   const addHabilidad = async () => {
-    if (!newHabilidad.nombre || !newHabilidad.categoria) {
+    if (!newHabilidad.nombre || !newHabilidad.categoria || !newHabilidad.descripcion) {
       alert("Por favor, complete todos los campos.");
       return;
     }
@@ -37,7 +38,7 @@ function AddHabilidadesTecnologicas() {
         }
       );
       alert("Habilidad agregada exitosamente.");
-      setNewHabilidad({ nombre: "", categoria: "" }); // Limpiar formulario
+      setNewHabilidad({ nombre: "", categoria: "", descripcion: "" }); // Limpiar formulario
       getHabilidades(); // Volver a cargar la lista de habilidades
     } catch (error) {
       console.error("Error al agregar habilidad:", error);
@@ -50,7 +51,6 @@ function AddHabilidadesTecnologicas() {
   }, []);
 
   return (
-    
     <div>
       <h1>Gestión de Habilidades Tecnológicas</h1>
 
@@ -61,7 +61,7 @@ function AddHabilidadesTecnologicas() {
           addHabilidad();
         }}
       >
-        <div className="col-md-6">
+        <div className="col-md-4">
           <input
             type="text"
             className="form-control"
@@ -76,7 +76,7 @@ function AddHabilidadesTecnologicas() {
             required
           />
         </div>
-        <div className="col-md-6">
+        <div className="col-md-4">
           <input
             type="text"
             className="form-control"
@@ -91,14 +91,26 @@ function AddHabilidadesTecnologicas() {
             required
           />
         </div>
-
+        <div className="col-md-4">
+          <textarea
+            className="form-control"
+            placeholder="Descripción"
+            rows="1"
+            value={newHabilidad.descripcion}
+            onChange={(e) =>
+              setNewHabilidad({
+                ...newHabilidad,
+                descripcion: e.target.value,
+              })
+            }
+            required
+          ></textarea>
+        </div>
         <div className="col-12">
-        <button type="submit" className="btn btn-primary">
-          <i class="fa fa-floppy-o" aria-hidden="true"></i> Guardar Habilidad
+          <button type="submit" className="btn btn-primary">
+            <i className="fa fa-floppy-o" aria-hidden="true"></i> Guardar Habilidad
           </button>
         </div>
-
-          
       </form>
 
       {/* Barra de búsqueda */}
@@ -106,7 +118,7 @@ function AddHabilidadesTecnologicas() {
         <input
           type="text"
           className="search-input"
-          placeholder="Buscar por nombre o categoría"
+          placeholder="Buscar por nombre, categoría o descripción"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -119,6 +131,7 @@ function AddHabilidadesTecnologicas() {
             <th>Id</th>
             <th>Nombre</th>
             <th>Categoría</th>
+            <th>Descripción</th>
           </tr>
         </thead>
         <tbody>
@@ -127,7 +140,8 @@ function AddHabilidadesTecnologicas() {
               const searchLowerCase = searchTerm.toLowerCase();
               return (
                 habilidad.nombre.toLowerCase().includes(searchLowerCase) ||
-                habilidad.categoria.toLowerCase().includes(searchLowerCase)
+                habilidad.categoria.toLowerCase().includes(searchLowerCase) ||
+                habilidad.descripcion.toLowerCase().includes(searchLowerCase)
               );
             })
             .map((habilidad, index) => (
@@ -135,6 +149,7 @@ function AddHabilidadesTecnologicas() {
                 <td>{habilidad.id}</td>
                 <td>{habilidad.nombre}</td>
                 <td>{habilidad.categoria}</td>
+                <td>{habilidad.descripcion}</td>
               </tr>
             ))}
         </tbody>

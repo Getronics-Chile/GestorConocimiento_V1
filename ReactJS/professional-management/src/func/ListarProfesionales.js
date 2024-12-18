@@ -1,4 +1,3 @@
-// AddProfessional.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { jsPDF } from "jspdf";
@@ -88,16 +87,23 @@ function AddProfessional() {
     const anioExperiencia = prof.anioExperiencia
       ? prof.anioExperiencia.toString()
       : "";
+    const correoElectronico = prof.correoElectronico
+      ? prof.correoElectronico.toLowerCase()
+      : "";
+    const direccion = prof.direccion ? prof.direccion.toLowerCase() : "";
+    const telefono = prof.telefono ? prof.telefono.toLowerCase() : "";
+    const idSAP = prof.idSAP ? prof.idSAP.toLowerCase() : "";
 
-    // Verificar coincidencias en habilidadesProfesional
+    // Verificar coincidencias en habilidades
     const habilidadesMatch =
-      prof.habilidadesProfesional &&
-      Array.isArray(prof.habilidadesProfesional) &&
-      prof.habilidadesProfesional.some((habilidad) =>
+      prof.conocimientoTecnicoProfesional &&
+      Array.isArray(prof.conocimientoTecnicoProfesional) &&
+      prof.conocimientoTecnicoProfesional.some((habilidad) =>
         (habilidad.habilidadTecnologica || "")
           .toLowerCase()
           .includes(searchLowerCase)
       );
+
 
     // Verificar coincidencias en formación académica
     const formacionMatch =
@@ -115,6 +121,24 @@ function AddProfessional() {
         (idioma.nombre || "").toLowerCase().includes(searchLowerCase)
       );
 
+    // Verificar coincidencias en experiencia laboral
+    const experienciaLaboralMatch =
+      prof.experienciaLaboralProfesional &&
+      Array.isArray(prof.experienciaLaboralProfesional) &&
+      prof.experienciaLaboralProfesional.some((experiencia) =>
+        (experiencia.empresa || "").toLowerCase().includes(searchLowerCase)
+      );
+
+    // Verificar coincidencias en certificaciones
+    const certificacionMatch =
+      prof.certificacionProfesional &&
+      Array.isArray(prof.certificacionProfesional) &&
+      prof.certificacionProfesional.some((certificacion) =>
+        (certificacion.nombreCertificacion || "")
+          .toLowerCase()
+          .includes(searchLowerCase)
+      );
+
     // Verificar coincidencias en los campos del profesional
     return (
       nombres.includes(searchLowerCase) ||
@@ -124,7 +148,13 @@ function AddProfessional() {
       nivelExperiencia.includes(searchLowerCase) ||
       habilidadesMatch ||
       formacionMatch ||
-      idiomasMatch
+      idiomasMatch ||
+      experienciaLaboralMatch ||
+      certificacionMatch ||
+      correoElectronico.includes(searchLowerCase) ||
+      direccion.includes(searchLowerCase) ||
+      telefono.includes(searchLowerCase) ||
+      idSAP.includes(searchLowerCase) // Filtrar por ID SAP
     );
   });
 
@@ -145,24 +175,34 @@ function AddProfessional() {
         <input
           type="text"
           className="search-input"
-          placeholder="Buscar por campo, formación académica o idiomas"
+          placeholder="Buscar por cucampo"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
       {/* Tabla de profesionales */}
-      <table className="table table-striped" id="professionalTable">
+      <table className="table table-bordered border-secondary" id="professionalTable">
         <thead>
           <tr>
             <th>Seleccionar</th>
-            <th>Id</th>
-            <th>A.Paterno A.Materno Nombres</th>
+            <th>RUT</th>
+            <th>ID SAP</th>
+            <th>Ap.Paterno Ap.Materno, Nombres</th>
+            <th>Fecha de Nacimiento</th>
+            <th>Dirección</th>
+            <th>Teléfono</th>
+            <th>Correo Electrónico</th>
             <th>Años de Experiencia</th>
             <th>Nivel de Experiencia</th>
             <th>Habilidades</th>
             <th>Formación Académica</th>
             <th>Idiomas</th>
+            <th>Experiencia Laboral</th>
+            <th>Certificaciones</th>
+            <th>Activo</th>
+            <th>Referido</th>
+            <th>Lista Negra</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -176,21 +216,22 @@ function AddProfessional() {
                   onChange={() => toggleRowSelection(prof.id)}
                 />
               </td>
-              <td>{prof.id || "N/A"}</td>
-              <td>
-                {prof.apaterno || "N/A"} {prof.amaterno || "N/A"}{" "}
-                {prof.nombres}
-              </td>
+              <td>{prof.rut || "N/A"}</td>
+              <td>{prof.idSAP || "N/A"}</td>
+              <td>{prof.apaterno || "N/A"} {prof.amaterno || "N/A"}, {prof.nombres || "N/A"}</td>
+              <td>{prof.fechaNacimiento || "N/A"}</td>
+              <td>{prof.direccion || "N/A"}</td>
+              <td>{prof.telefono || "N/A"}</td>
+              <td>{prof.correoElectronico || "N/A"}</td>
               <td>{prof.anioExperiencia || "N/A"}</td>
               <td>{prof.nivelExperiencia || "No Asignado"}</td>
               <td>
-                {prof.habilidadesProfesional &&
-                Array.isArray(prof.habilidadesProfesional) ? (
+                {prof.conocimientoTecnicoProfesional &&
+                  Array.isArray(prof.conocimientoTecnicoProfesional) ? (
                   <ul>
-                    {prof.habilidadesProfesional.map((habilidad) => (
+                    {prof.conocimientoTecnicoProfesional.map((habilidad) => (
                       <li key={habilidad.id}>
-                        {habilidad.habilidadTecnologica} (
-                        {habilidad.nivelCompetencia})
+                        {habilidad.habilidadTecnologica} ({habilidad.nivelCompetencia})
                       </li>
                     ))}
                   </ul>
@@ -200,7 +241,7 @@ function AddProfessional() {
               </td>
               <td>
                 {prof.formacionAcademicaProfesional &&
-                Array.isArray(prof.formacionAcademicaProfesional) ? (
+                  Array.isArray(prof.formacionAcademicaProfesional) ? (
                   <ul>
                     {prof.formacionAcademicaProfesional.map((formacion) => (
                       <li key={formacion.id}>
@@ -214,7 +255,7 @@ function AddProfessional() {
               </td>
               <td>
                 {prof.idiomasProfesional &&
-                Array.isArray(prof.idiomasProfesional) ? (
+                  Array.isArray(prof.idiomasProfesional) ? (
                   <ul>
                     {prof.idiomasProfesional.map((idioma) => (
                       <li key={idioma.id}>
@@ -226,6 +267,37 @@ function AddProfessional() {
                   "No Asignado"
                 )}
               </td>
+              <td>
+                {prof.experienciaLaboralProfesional &&
+                  Array.isArray(prof.experienciaLaboralProfesional) ? (
+                  <ul>
+                    {prof.experienciaLaboralProfesional.map((experiencia) => (
+                      <li key={experiencia.id}>
+                        {experiencia.empresa} - {experiencia.cargo}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  "No Asignado"
+                )}
+              </td>
+              <td>
+                {prof.certificacionProfesional &&
+                  Array.isArray(prof.certificacionProfesional) ? (
+                  <ul>
+                    {prof.certificacionProfesional.map((certificacion) => (
+                      <li key={certificacion.id}>
+                        {certificacion.nombreCertificacion} de {certificacion.institucionEmisora}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  "No Asignado"
+                )}
+              </td>
+              <td>{prof.activo ? "Sí" : "No"}</td>
+              <td>{prof.referido ? "Sí" : "No"}</td>
+              <td>{prof.listaNegra ? "Sí" : "No"}</td>
               <td>
                 <button
                   className="btn btn-outline-danger"

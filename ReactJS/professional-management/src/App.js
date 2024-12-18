@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../node_modules/font-awesome/css/font-awesome.min.css";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Line, Radar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
-  ArcElement,
+  PointElement,
+  LineElement,
+  RadialLinearScale,
   Title,
   Tooltip,
   Legend,
@@ -20,18 +22,20 @@ import AddProfessional from "./func/AgregarProfesional"; // Componente de Profes
 import AddHabilidadesTecnologicas from "./func/AddHabilidadesTecnologicas"; // Componente de Habilidades
 import ListProfessional from "./func/ListarProfesionales"; // Componente de Habilidades
 import Idiomas from "./func/Idiomas"; // Componente de Idiomas
-import ChartDataLabels from "chartjs-plugin-datalabels"; // Importa el plugin de datalabels
+import ChatGpt from "./chatgpt/DynamicChat";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
-  ArcElement,
+  PointElement,
+  LineElement,
+  RadialLinearScale,
   Title,
   Tooltip,
-  Legend,
-  ChartDataLabels // Registra el plugin de datalabels
+  Legend
 );
+
 function App() {
   const [currentDate, setCurrentDate] = useState("");
   const [stats, setStats] = useState({
@@ -49,8 +53,7 @@ function App() {
 
   useEffect(() => {
     const date = new Date();
-    const formattedDate = `${date.getDate()}/${date.getMonth() + 1
-      }/${date.getFullYear()}`;
+    const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
     setCurrentDate(formattedDate);
 
     // Obtener las estadísticas
@@ -59,7 +62,13 @@ function App() {
     getIdiomas();
   }, []);
 
-  // Obtener los profesionales
+  const [isProfesionalesOpen, setProfesionalesOpen] = useState(false);
+  const [isSidebarMinimized, setSidebarMinimized] = useState(false);
+
+  const toggleProfesionales = () => {
+    setProfesionalesOpen(!isProfesionalesOpen);
+  };
+
   const getProfessionals = async () => {
     try {
       const response = await axios.get(
@@ -67,20 +76,15 @@ function App() {
       );
       const data = response.data;
 
-      // Calcular estadísticas
       const totalProfesionales = data.length;
       const promedioExperiencia =
         data.reduce((sum, prof) => sum + Number(prof.anioExperiencia), 0) /
         totalProfesionales;
 
       const nivelExperiencia = {
-        Junior: data.filter((prof) => prof.nivelExperiencia === "Junior")
-          .length,
-        Semisenior: data.filter(
-          (prof) => prof.nivelExperiencia === "Semisenior"
-        ).length,
-        Senior: data.filter((prof) => prof.nivelExperiencia === "Senior")
-          .length,
+        Junior: data.filter((prof) => prof.nivelExperiencia === "Junior").length,
+        Semisenior: data.filter((prof) => prof.nivelExperiencia === "Semisenior").length,
+        Senior: data.filter((prof) => prof.nivelExperiencia === "Senior").length,
       };
 
       setStats((prevStats) => ({
@@ -94,7 +98,6 @@ function App() {
     }
   };
 
-  // Obtener las habilidades tecnológicas
   const getHabilidadesTecnologicas = async () => {
     try {
       const response = await axios.get(
@@ -119,7 +122,6 @@ function App() {
     }
   };
 
-  // Obtener los idiomas
   const getIdiomas = async () => {
     try {
       const response = await axios.get(
@@ -137,7 +139,7 @@ function App() {
   };
 
   // Gráfico de barras de nivel de experiencia
-  const barChartData = {
+  const barChartDataExperience = {
     labels: ["Junior", "Semisenior", "Senior"],
     datasets: [
       {
@@ -154,94 +156,82 @@ function App() {
     ],
   };
 
-  // Gráfico de torta para habilidades por categoría
-  const pieChartData = {
+  // Gráfico de barras de habilidades por categoría
+  const barChartDataSkills = {
     labels: Object.keys(stats.habilidadesPorCategoria),
     datasets: [
       {
-        label: "Distribución por Categoría",
+        label: "Habilidades por Categoría",
         data: Object.values(stats.habilidadesPorCategoria),
-        backgroundColor: [
-          "#FF5733",
-          "#FFBD33",
-          "#33FF57",
-          "#3377FF",
-          "#FF33A5",
-        ],
+        backgroundColor: ["#FF5733", "#FFBD33", "#33FF57", "#3377FF", "#FF33A5"],
+        borderWidth: 1,
       },
     ],
   };
 
-
-  // Configuración del gráfico de torta con etiquetas de porcentaje
-  const pieChartOptions = {
-    responsive: true,
-    plugins: {
-      datalabels: {
-        display: true,
-        formatter: (value, context) => {
-          const total = context.dataset.data.reduce((sum, val) => sum + val, 0); // Sumar todos los valores
-          const percentage = ((value / total) * 100).toFixed(2); // Calcular el porcentaje
-          return `${percentage}%`; // Mostrar el porcentaje
-        },
-        color: "white", // Color del texto en las etiquetas
-        font: {
-          weight: "bold",
-          size: 14,
-        },
-        anchor: "center",
-        align: "center",
+  // Gráfico de líneas de tendencias de crecimiento (ejemplo)
+  const lineChartData = {
+    labels: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"],
+    datasets: [
+      {
+        label: "Profesionales Activos",
+        data: [10, 15, 20, 25, 30, 40], // Datos de ejemplo
+        fill: false,
+        backgroundColor: "#42A5F5",
+        borderColor: "#1E88E5",
       },
-    },
+    ],
   };
 
-  const [isProfesionalesOpen, setProfesionalesOpen] = useState(false);
-  const [isSidebarMinimized, setSidebarMinimized] = useState(false);
-
-  const toggleProfesionales = () => {
-    setProfesionalesOpen(!isProfesionalesOpen);
-  };
-
-  const toggleSidebar = () => {
-    setSidebarMinimized(!isSidebarMinimized);
+  // Gráfico de radar para comparación de habilidades
+  const radarChartData = {
+    labels: Object.keys(stats.habilidadesPorCategoria),
+    datasets: [
+      {
+        label: "Distribución de Habilidades",
+        data: Object.values(stats.habilidadesPorCategoria),
+        backgroundColor: "rgba(54, 162, 235, 0.2)",
+        borderColor: "#36A2EB",
+        borderWidth: 1,
+      },
+    ],
   };
 
   return (
     <div>
-      {/* Header */}
       <header className="header d-flex justify-content-between align-items-center">
         <span>Getronics - Gestor de Conocimiento</span>
         <span>{currentDate}</span>
       </header>
 
-      {/* Sidebar */}
       <Router>
         <div className="d-flex">
           <div className={`sidebar ${isSidebarMinimized ? "minimized" : ""}`}>
-            <button className="toggle-btn" onClick={toggleSidebar}>
-              {isSidebarMinimized ? ">" : "<"}
-            </button>
+            {/* <button className="toggle-btn" onClick={toggleSidebar}>
+                        {isSidebarMinimized ? ">" : "<"}
+                      </button> */}
             <ul>
               <li>
                 <Link to="/">
-                  <i className="fa fa-home" aria-hidden="true"></i> Inicio
+                <i class="fa fa-tachometer" aria-hidden="true"></i> Dashboard
                 </Link>
               </li>
               <li>
                 <Link to="#" onClick={toggleProfesionales}>
                   <i className="fa fa-users" aria-hidden="true"></i> Profesionales
+                  &nbsp;
                   <i className={`fa fa-chevron-${isProfesionalesOpen ? "up" : "down"}`} aria-hidden="true"></i>
                 </Link>
                 {isProfesionalesOpen && (
                   <ul className="sublist">
                     <li>
-                      <Link to="/profesionales/listar">
-                        <i className="fa fa-list" aria-hidden="true"></i> Listar Profesionales
+                      <Link to="/profesionales/agregar">
+                        <i className="fa fa-plus" aria-hidden="true"></i> Agregar Profesional
                       </Link>
                     </li>
                     <li>
-                      <Link to="/profesionales/agregar">
-                        <i className="fa fa-plus" aria-hidden="true"></i> Agregar Profesional
+                      <Link to="/profesionales/listar">
+                        <i className="fa fa-list" aria-hidden="true"></i> Listar Profesionales
                       </Link>
                     </li>
                     <li>
@@ -253,8 +243,13 @@ function App() {
                 )}
               </li>
               <li>
+                <Link to="/clientes">
+                <i class="fa fa-handshake-o" aria-hidden="true"></i> Clientes
+                </Link>
+              </li>
+              <li>
                 <Link to="/habilidades">
-                  <i className="fa fa-desktop" aria-hidden="true"></i> Habilidades
+                <i class="fa fa-lightbulb-o" aria-hidden="true"></i> Conocimientos
                 </Link>
               </li>
               <li>
@@ -262,10 +257,16 @@ function App() {
                   <i className="fa fa-language" aria-hidden="true"></i> Idiomas
                 </Link>
               </li>
+
+              <li>
+                <Link to="/chat/ask">
+                <i class="fa fa-question-circle-o" aria-hidden="true"></i> Soporte
+                </Link>
+              </li>
+
             </ul>
           </div>
 
-          {/* Contenido principal */}
           <div className="content">
             <Routes>
               <Route
@@ -273,7 +274,6 @@ function App() {
                 element={
                   <div>
                     <h1>Dashboard</h1>
-
                     {/* Mostrar estadísticas con gráficos */}
                     <div className="stats-container">
                       <div className="stat-card">
@@ -294,16 +294,15 @@ function App() {
                       </div>
                     </div>
 
-                    {/* Gráficos */}
                     <div className="charts-container">
                       <div className="chart-card">
                         <h3>Distribución por Nivel de Experiencia</h3>
-                        <Bar data={barChartData} />
+                        <Bar data={barChartDataExperience} />
                       </div>
 
                       <div className="chart-card">
-                        <h3>Distribución por Categoría de Habilidades</h3>
-                        <Pie data={pieChartData} options={pieChartOptions} />
+                        <h3>Comparación de Habilidades</h3>
+                        <Radar data={radarChartData} />
                       </div>
                     </div>
                   </div>
@@ -316,6 +315,7 @@ function App() {
                 element={<AddHabilidadesTecnologicas />}
               />
               <Route path="/idiomas" element={<Idiomas />} />
+              <Route path="/chat/ask" element={<ChatGpt />} />
             </Routes>
           </div>
         </div>

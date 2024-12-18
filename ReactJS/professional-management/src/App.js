@@ -260,7 +260,7 @@ function App() {
 
               <li>
                 <Link to="/chat/ask">
-                <i class="fa fa-question-circle-o" aria-hidden="true"></i> Soporte
+                <i class="fa fa-question-circle-o" aria-hidden="true"></i> Prometeo
                 </Link>
               </li>
 

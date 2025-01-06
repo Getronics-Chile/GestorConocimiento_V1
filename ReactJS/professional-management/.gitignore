@@ -5,6 +5,8 @@
 /.pnp
 .pnp.js
 
+src/chatgpt/ChatGpt.js
+
 # testing
 /coverage
 

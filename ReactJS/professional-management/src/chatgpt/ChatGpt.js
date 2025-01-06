@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 // Asegúrate de poner tu API Key de OpenAI aquí
-const OPENAI_API_KEY = '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'; // Reemplaza con tu clave API real
+const OPENAI_API_KEY = '#'; // Reemplaza con tu clave API real
 
 function DynamicChat() {
   const [question, setQuestion] = useState("");

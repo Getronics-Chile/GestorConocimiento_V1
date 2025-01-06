@@ -24,6 +24,8 @@ import ListProfessional from "./func/ListarProfesionales"; // Componente de Habi
 import Idiomas from "./func/Idiomas"; // Componente de Idiomas
 import ChatGpt from "./chatgpt/DynamicChat";
 
+import AddCliente from "./func/Cliente";
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -107,10 +109,16 @@ function App() {
 
       const totalHabilidades = habilidades.length;
       const habilidadesPorCategoria = habilidades.reduce((acc, habilidad) => {
-        const categoria = habilidad.categoria || "Sin categoría";
+        const categoria = habilidad.categoria || "Sin categoría";  // Si no tiene categoría, asigna "Sin categoría"
         acc[categoria] = (acc[categoria] || 0) + 1;
         return acc;
       }, {});
+
+      setStats((prevStats) => ({
+        ...prevStats,
+        habilidadesPorCategoria,
+      }));
+
 
       setStats((prevStats) => ({
         ...prevStats,
@@ -213,7 +221,7 @@ function App() {
             <ul>
               <li>
                 <Link to="/">
-                <i class="fa fa-tachometer" aria-hidden="true"></i> Dashboard
+                  <i class="fa fa-tachometer" aria-hidden="true"></i> Dashboard
                 </Link>
               </li>
               <li>
@@ -243,13 +251,13 @@ function App() {
                 )}
               </li>
               <li>
-                <Link to="/clientes">
-                <i class="fa fa-handshake-o" aria-hidden="true"></i> Clientes
+                <Link to="/clientes/crear">
+                  <i class="fa fa-handshake-o" aria-hidden="true"></i> Clientes
                 </Link>
               </li>
               <li>
                 <Link to="/habilidades">
-                <i class="fa fa-lightbulb-o" aria-hidden="true"></i> Conocimientos
+                  <i class="fa fa-lightbulb-o" aria-hidden="true"></i> Conocimientos
                 </Link>
               </li>
               <li>
@@ -260,7 +268,7 @@ function App() {
 
               <li>
                 <Link to="/chat/ask">
-                <i class="fa fa-question-circle-o" aria-hidden="true"></i> Prometeo
+                  <i class="fa fa-question-circle-o" aria-hidden="true"></i> Prometeo
                 </Link>
               </li>
 
@@ -304,6 +312,7 @@ function App() {
                         <h3>Comparación de Habilidades</h3>
                         <Radar data={radarChartData} />
                       </div>
+                      
                     </div>
                   </div>
                 }
@@ -316,6 +325,7 @@ function App() {
               />
               <Route path="/idiomas" element={<Idiomas />} />
               <Route path="/chat/ask" element={<ChatGpt />} />
+              <Route path="/clientes/crear" element={<AddCliente />} />
             </Routes>
           </div>
         </div>

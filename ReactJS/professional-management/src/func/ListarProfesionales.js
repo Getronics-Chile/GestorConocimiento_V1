@@ -182,10 +182,9 @@ function AddProfessional() {
       </div>
 
       {/* Tabla de profesionales */}
-      <table className="table table-bordered border-secondary" id="professionalTable">
+      <table className="table table-striped" id="professionalTable">
         <thead>
           <tr>
-            <th>Seleccionar</th>
             <th>RUT</th>
             <th>ID SAP</th>
             <th>Ap.Paterno Ap.Materno, Nombres</th>
@@ -209,13 +208,7 @@ function AddProfessional() {
         <tbody>
           {currentProfessionals.map((prof) => (
             <tr key={prof.id}>
-              <td>
-                <input
-                  type="checkbox"
-                  checked={selectedRows.includes(prof.id)}
-                  onChange={() => toggleRowSelection(prof.id)}
-                />
-              </td>
+
               <td>{prof.rut || "N/A"}</td>
               <td>{prof.idSAP || "N/A"}</td>
               <td>{prof.apaterno || "N/A"} {prof.amaterno || "N/A"}, {prof.nombres || "N/A"}</td>

@@ -22,7 +22,7 @@ import AddProfessional from "./func/AgregarProfesional"; // Componente de Profes
 import AddHabilidadesTecnologicas from "./func/AddHabilidadesTecnologicas"; // Componente de Habilidades
 import ListProfessional from "./func/ListarProfesionales"; // Componente de Habilidades
 import Idiomas from "./func/Idiomas"; // Componente de Idiomas
-import ChatGpt from "./chatgpt/DynamicChat";
+//import ChatGpt from "./chatgpt/DynamicChat";
 
 import AddCliente from "./func/Cliente";
 
@@ -324,7 +324,6 @@ function App() {
                 element={<AddHabilidadesTecnologicas />}
               />
               <Route path="/idiomas" element={<Idiomas />} />
-              <Route path="/chat/ask" element={<ChatGpt />} />
               <Route path="/clientes/crear" element={<AddCliente />} />
             </Routes>
           </div>

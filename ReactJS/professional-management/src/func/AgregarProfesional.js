@@ -1,63 +1,44 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "../../node_modules/font-awesome/css/font-awesome.min.css";
 
 const APIURL = "http://localhost:8000";
 
-function AddProfessional() {
-  const [setProfesionales] = useState([]);
-  const [newProfessional, setNewProfessional] = useState({
+function ProfesionalForm() {
+  const [profesionales, setProfesionales] = useState([]);
+  const [newProfesional, setNewProfesional] = useState({
+    idSap: null,
     rut: "",
-    idSAP: "",
     nombres: "",
     apaterno: "",
     amaterno: "",
     fechaNacimiento: "",
+    nacionalidad: "",
     direccion: "",
-    correoElectronico: "",
     telefono: "",
-    anioExperiencia: 0,
+    correoElectronico: "",
+    anioExperiencia: null,
+    perfilProfesional: "",
     nivelExperiencia: "",
     fechaIngresoGetronics: "",
     fechaEgresoGetronics: "",
-    activo: true,
-    referido: true,
-    listaNegra: true,
-    conocimientoTecnicoProfesional: [],
-    idiomasProfesional: [],
+    referido: false,
+    estadoProfesional: null,
+    fotografia: "",
+    conocimientoProfesional: [],
     formacionAcademicaProfesional: [],
+    idiomasProfesional: [],
+    experienciaLaboralProfesional: [],
     certificacionProfesional: [],
-    cliente: { id: "" },
+    referenciaProfesional: [],
+    publicacionesProfesional: [],
+    rrssPortafolioProfesional: [],
+    proyectos: [],
+    jefeServicio: {}
   });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editingProfesional, setEditingProfesional] = useState(null);
 
-  const [newHabilidad, setNewHabilidad] = useState({ nombre: "", nivelCompetencia: "" });
-  const [newIdioma, setNewIdioma] = useState({ nombre: "", nivelDominio: "" });
-  const [newFormacion, setNewFormacion] = useState({
-    carrera: "",
-    institucion: "",
-    anioInicio: "",
-    anioFin: "",
-  });
-
-  const [newCertificacion, setNewCertificacion] = useState({
-    nombreCertificacion: "",
-    institucionEmisora: "",
-    fechaEmision: "",
-    fechaVencimiento: "",
-  });
-
-  const [habilidades, setHabilidades] = useState([]);
-  const [idiomas, setIdiomas] = useState([]);
-  const [clientes, setClientes] = useState([]);
-  const [professionalSummary, setProfessionalSummary] = useState(null);
-
-  useEffect(() => {
-    getHabilidades();
-    getIdiomas();
-    getClientes();
-  }, []);
-
-  const getProfessionals = async () => {
+  const getProfesionales = async () => {
     try {
       const response = await axios.get(`${APIURL}/api/profesional/listarTodos`);
       setProfesionales(response.data);
@@ -66,743 +47,916 @@ function AddProfessional() {
     }
   };
 
-  const getHabilidades = async () => {
+  const handleFotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Foto = reader.result.split(',')[1];
+        setNewProfesional({ ...newProfesional, fotografia: base64Foto });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const addOrUpdateProfesional = async () => {
     try {
-      const response = await axios.get(
-        `${APIURL}/api/habilidadesTecnologicas/listarTodas`
-      );
-      setHabilidades(response.data);
+      if (editingProfesional) {
+        await axios.put(
+          `${APIURL}/api/profesional/actualizar/${editingProfesional.id}`,
+          newProfesional,
+          { headers: { "Content-Type": "application/json" } }
+        );
+        alert("Profesional actualizado exitosamente.");
+      } else {
+        await axios.post(
+          `${APIURL}/api/profesional/crear`,
+          newProfesional,
+          { headers: { "Content-Type": "application/json" } }
+        );
+        alert("Profesional agregado exitosamente.");
+      }
+
+      resetForm();
+      getProfesionales();
     } catch (error) {
-      console.error("Error al obtener habilidades:", error);
+      console.error("Error al guardar profesional:", error);
+      alert("Error al guardar profesional.");
     }
   };
 
-  const getIdiomas = async () => {
-    try {
-      const response = await axios.get(`${APIURL}/api/idiomas/listar`);
-      setIdiomas(response.data);
-    } catch (error) {
-      console.error("Error al obtener idiomas:", error);
+  const resetForm = () => {
+    setNewProfesional({
+      idSap: 0,
+      rut: "",
+      nombres: "",
+      apaterno: "",
+      amaterno: "",
+      fechaNacimiento: "",
+      nacionalidad: "",
+      direccion: "",
+      telefono: "",
+      correoElectronico: "",
+      anioExperiencia: 0,
+      perfilProfesional: "",
+      nivelExperiencia: "",
+      fechaIngresoGetronics: "",
+      fechaEgresoGetronics: "",
+      referido: false,
+      estadoProfesional: 1,
+      fotografia: "",
+      conocimientoProfesional: [],
+      formacionAcademicaProfesional: [],
+      idiomasProfesional: [],
+      experienciaLaboralProfesional: [],
+      certificacionProfesional: [],
+      referenciaProfesional: [],
+      publicacionesProfesional: [],
+      rrssPortafolioProfesional: [],
+      proyectos: [],
+      jefeServicio: {}
+    });
+    setEditingProfesional(null);
+  };
+
+  const editProfesional = (profesional) => {
+    setEditingProfesional(profesional);
+    setNewProfesional(profesional);
+  };
+
+  const handleJsonUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const jsonData = JSON.parse(event.target.result);
+          setNewProfesional((prev) => ({
+            ...prev,
+            ...jsonData
+          }));
+          alert("Archivo JSON cargado exitosamente.");
+        } catch (error) {
+          console.error("Error al leer el archivo JSON:", error);
+          alert("El archivo no es un JSON válido.");
+        }
+      };
+      reader.readAsText(file);
     }
   };
 
-  const getClientes = async () => {
-    try {
-      const response = await axios.get(`${APIURL}/api/cliente/listarTodos`);
-      setClientes(response.data);
-    } catch (error) {
-      console.error("Error al obtener clientes:", error);
-    }
-  };
-
-  const addHabilidad = () => {
-    if (newHabilidad.nombre && newHabilidad.nivelCompetencia) {
-      setNewProfessional((prevState) => ({
-        ...prevState,
-        conocimientoTecnicoProfesional: [
-          ...prevState.conocimientoTecnicoProfesional,
-          newHabilidad,
-        ],
-      }));
-      setNewHabilidad({ nombre: "", nivelCompetencia: "" });
-    } else {
-      alert("Completa los campos de habilidad antes de agregar.");
-    }
-  };
-
-  const addIdioma = () => {
-    if (newIdioma.nombre && newIdioma.nivelDominio) {
-      setNewProfessional((prevState) => ({
-        ...prevState,
-        idiomasProfesional: [
-          ...prevState.idiomasProfesional,
-          newIdioma,
-        ],
-      }));
-      setNewIdioma({ nombre: "", nivelDominio: "" });
-    } else {
-      alert("Completa los campos de idioma antes de agregar.");
-    }
-  };
-
-  const addFormacion = () => {
-    if (
-      newFormacion.carrera &&
-      newFormacion.institucion &&
-      newFormacion.anioInicio &&
-      newFormacion.anioFin
-    ) {
-      setNewProfessional((prevState) => ({
-        ...prevState,
-        formacionAcademicaProfesional: [
-          ...prevState.formacionAcademicaProfesional,
-          newFormacion,
-        ],
-      }));
-      setNewFormacion({
-        carrera: "",
-        institucion: "",
-        anioInicio: "",
-        anioFin: "",
-      });
-    } else {
-      alert("Completa los campos de formación académica antes de agregar.");
-    }
-  };
-
-  const addCertificacion = () => {
-    if (
-      newCertificacion.nombreCertificacion &&
-      newCertificacion.institucionEmisora &&
-      newCertificacion.fechaEmision &&
-      newCertificacion.fechaVencimiento
-    ) {
-      setNewProfessional((prevState) => ({
-        ...prevState,
-        certificacionProfesional: [
-          ...prevState.certificacionProfesional,
-          newCertificacion,
-        ],
-      }));
-      setNewCertificacion({
-        nombreCertificacion: "",
-        institucionEmisora: "",
-        fechaEmision: "",
-        fechaVencimiento: "",
-      });
-    } else {
-      alert("Completa los campos de certificación antes de agregar.");
-    }
-  };
-
-  const addProfessional = async () => {
-    try {
-      const professionalData = { ...newProfessional };
-
-      console.log("Datos enviados al backend:", professionalData);
-
-      await axios.post(`${APIURL}/api/profesional/crear`, professionalData, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      alert("Profesional agregado exitosamente");
-
-      setProfessionalSummary(newProfessional);
-
-      setNewProfessional({
-        rut: "",
-        idSAP: "",
-        nombres: "",
-        apaterno: "",
-        amaterno: "",
-        fechaNacimiento: "",
-        direccion: "",
-        correoElectronico: "",
-        telefono: "",
-        anioExperiencia: 0,
-        nivelExperiencia: "",
-        fechaIngresoGetronics: "",
-        fechaEgresoGetronics: "",
-        activo: true,
-        referido: true,
-        listaNegra: true,
-        conocimientoTecnicoProfesional: [],
-        idiomasProfesional: [],
-        formacionAcademicaProfesional: [],
-        certificacionProfesional: [],
-        cliente: { id: "" },
-      });
-
-      getProfessionals();
-    } catch (error) {
-      console.error("Error al agregar profesional:", error);
-      alert("Error al agregar profesional.");
-    }
-  };
+  useEffect(() => {
+    getProfesionales();
+  }, []);
 
   return (
     <div>
-      <h1>Agregar Profesional</h1>
-      <hr />
+      <h1>{editingProfesional ? "Modificar Profesional" : "Agregar Profesional"}</h1>
+
       <form
         className="row g-3 mb-4"
         onSubmit={(e) => {
           e.preventDefault();
-          addProfessional();
+          addOrUpdateProfesional();
         }}
       >
-        {/* Información básica */}
+        {/* Campos del profesional */}
+
+
+        {/* Formulario de subida de JSON */}
+        <div className="mb-4">
+          <label htmlFor="uploadJson" className="form-label">Cargar datos desde archivo JSON</label>
+          <input
+            type="file"
+            id="uploadJson"
+            className="form-control"
+            accept=".json"
+            onChange={handleJsonUpload}
+          />
+
+        </div>
+
         <div className="col-md-4">
-          <label>RUT</label>
           <input
             type="text"
             className="form-control"
-            value={newProfessional.rut}
-            onChange={(e) =>
-              setNewProfessional({ ...newProfessional, rut: e.target.value })
-            }
+            placeholder="RUT"
+            value={newProfesional.rut}
+            onChange={(e) => setNewProfesional({ ...newProfesional, rut: e.target.value })}
+            required
           />
         </div>
+
         <div className="col-md-4">
-          <label>ID SAP</label>
+          <input
+            type="number"
+            className="form-control"
+            placeholder="Id Sap"
+            value={newProfesional.idSap}
+            onChange={(e) => setNewProfesional({ ...newProfesional, idSap: e.target.value })}
+            required
+          />
+        </div>
+
+        <div className="col-md-4">
           <input
             type="text"
             className="form-control"
-            value={newProfessional.idSAP}
-            onChange={(e) =>
-              setNewProfessional({ ...newProfessional, idSAP: e.target.value })
-            }
+            placeholder="Nombres"
+            value={newProfesional.nombres}
+            onChange={(e) => setNewProfesional({ ...newProfesional, nombres: e.target.value })}
+            required
           />
         </div>
+
         <div className="col-md-4">
-          <label>Nombres</label>
           <input
             type="text"
             className="form-control"
-            value={newProfessional.nombres}
-            onChange={(e) =>
-              setNewProfessional({ ...newProfessional, nombres: e.target.value })
-            }
+            placeholder="Apellido Paterno"
+            value={newProfesional.apaterno}
+            onChange={(e) => setNewProfesional({ ...newProfesional, apaterno: e.target.value })}
+            
           />
         </div>
+
         <div className="col-md-4">
-          <label>Apellido Paterno</label>
           <input
             type="text"
             className="form-control"
-            value={newProfessional.apaterno}
-            onChange={(e) =>
-              setNewProfessional({ ...newProfessional, apaterno: e.target.value })
-            }
+            placeholder="Apellido Materno"
+            value={newProfesional.amaterno}
+            onChange={(e) => setNewProfesional({ ...newProfesional, amaterno: e.target.value })}
           />
         </div>
+
         <div className="col-md-4">
-          <label>Apellido Materno</label>
-          <input
-            type="text"
-            className="form-control"
-            value={newProfessional.amaterno}
-            onChange={(e) =>
-              setNewProfessional({ ...newProfessional, amaterno: e.target.value })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Fecha de Nacimiento</label>
           <input
             type="date"
             className="form-control"
-            value={newProfessional.fechaNacimiento}
-            onChange={(e) =>
-              setNewProfessional({
-                ...newProfessional,
-                fechaNacimiento: e.target.value,
-              })
-            }
+            placeholder="Fecha de Nacimiento"
+            value={newProfesional.fechaNacimiento}
+            onChange={(e) => setNewProfesional({ ...newProfesional, fechaNacimiento: e.target.value })}
           />
         </div>
+
         <div className="col-md-4">
-          <label>Dirección</label>
           <input
             type="text"
             className="form-control"
-            value={newProfessional.direccion}
-            onChange={(e) =>
-              setNewProfessional({ ...newProfessional, direccion: e.target.value })
-            }
+            placeholder="Nacionalidad"
+            value={newProfesional.nacionalidad}
+            onChange={(e) => setNewProfesional({ ...newProfesional, nacionalidad: e.target.value })}
           />
         </div>
+
         <div className="col-md-4">
-          <label>Teléfono</label>
           <input
             type="text"
             className="form-control"
-            value={newProfessional.telefono}
-            onChange={(e) =>
-              setNewProfessional({ ...newProfessional, telefono: e.target.value })
-            }
+            placeholder="Dirección"
+            value={newProfesional.direccion}
+            onChange={(e) => setNewProfesional({ ...newProfesional, direccion: e.target.value })}
           />
         </div>
+
         <div className="col-md-4">
-          <label>Correo Electrónico</label>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Teléfono"
+            value={newProfesional.telefono}
+            onChange={(e) => setNewProfesional({ ...newProfesional, telefono: e.target.value })}
+          />
+        </div>
+
+        <div className="col-md-4">
           <input
             type="email"
             className="form-control"
-            value={newProfessional.correoElectronico}
-            onChange={(e) =>
-              setNewProfessional({
-                ...newProfessional,
-                correoElectronico: e.target.value,
-              })
-            }
+            placeholder="Correo Electrónico"
+            value={newProfesional.correoElectronico}
+            onChange={(e) => setNewProfesional({ ...newProfesional, correoElectronico: e.target.value })}
           />
         </div>
+
         <div className="col-md-4">
-          <label>Años de Experiencia</label>
           <input
             type="number"
             className="form-control"
-            value={newProfessional.anioExperiencia}
-            onChange={(e) =>
-              setNewProfessional({
-                ...newProfessional,
-                anioExperiencia: e.target.value,
-              })
-            }
+            placeholder="Años de Experiencia"
+            value={newProfesional.anioExperiencia}
+            onChange={(e) => setNewProfesional({ ...newProfesional, anioExperiencia: e.target.value })}
           />
         </div>
+
         <div className="col-md-4">
-          <label>Nivel de Experiencia</label>
           <input
             type="text"
             className="form-control"
-            value={newProfessional.nivelExperiencia}
-            onChange={(e) =>
-              setNewProfessional({
-                ...newProfessional,
-                nivelExperiencia: e.target.value,
-              })
-            }
+            placeholder="Perfil Profesional"
+            value={newProfesional.perfilProfesional}
+            onChange={(e) => setNewProfesional({ ...newProfesional, perfilProfesional: e.target.value })}
           />
-        </div>
-        <div className="col-md-4">
-          <label>Fecha de Ingreso a Getronics</label>
-          <input
-            type="date"
-            className="form-control"
-            value={newProfessional.fechaIngresoGetronics}
-            onChange={(e) =>
-              setNewProfessional({
-                ...newProfessional,
-                fechaIngresoGetronics: e.target.value,
-              })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Fecha de Egreso de Getronics</label>
-          <input
-            type="date"
-            className="form-control"
-            value={newProfessional.fechaEgresoGetronics}
-            onChange={(e) =>
-              setNewProfessional({
-                ...newProfessional,
-                fechaEgresoGetronics: e.target.value,
-              })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Activo</label>
-          <input
-            type="checkbox"
-            checked={newProfessional.activo}
-            onChange={(e) =>
-              setNewProfessional({
-                ...newProfessional,
-                activo: e.target.checked,
-              })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Referido</label>
-          <input
-            type="checkbox"
-            checked={newProfessional.referido}
-            onChange={(e) =>
-              setNewProfessional({
-                ...newProfessional,
-                referido: e.target.checked,
-              })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Lista Negra</label>
-          <input
-            type="checkbox"
-            checked={newProfessional.listaNegra}
-            onChange={(e) =>
-              setNewProfessional({
-                ...newProfessional,
-                listaNegra: e.target.checked,
-              })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Cliente (Seleccionar)</label>
-          <select
-            className="form-control"
-            value={newProfessional.cliente?.id || ""}
-            onChange={(e) => {
-              const selectedClient = clientes.find(cliente => cliente.id === parseInt(e.target.value));
-              setNewProfessional({
-                ...newProfessional,
-                cliente: selectedClient || { id: "", razonSocial: "", rut: "", rubro: "", activo: false },
-              });
-            }}
-          >
-            <option value="">Seleccione un cliente</option>
-            {clientes.map((cliente) => (
-              <option key={cliente.id} value={cliente.id}>
-                {cliente.razonSocial} {/* Muestra la razón social del cliente */}
-              </option>
-            ))}
-          </select>
         </div>
 
-        {/* Sección de Habilidades */}
-        <h3>Agregar Habilidad Tecnológica</h3>
         <div className="col-md-4">
-          <label>Habilidad Tecnológica</label>
-          <select
+          <input
+            type="text"
             className="form-control"
-            value={newHabilidad.nombre}
-            onChange={(e) => setNewHabilidad({ ...newHabilidad, nombre: e.target.value })}
-          >
-            <option value="">Seleccionar habilidad</option>
-            {habilidades.map((habilidad) => (
-              <option key={habilidad.id} value={habilidad.nombre}>
-                {habilidad.nombre}
-              </option>
-            ))}
-          </select>
+            placeholder="Nivel de Experiencia"
+            value={newProfesional.nivelExperiencia}
+            onChange={(e) => setNewProfesional({ ...newProfesional, nivelExperiencia: e.target.value })}
+          />
         </div>
+
         <div className="col-md-4">
-          <label>Nivel de Competencia</label>
-          <select
+          <input
+            type="date"
             className="form-control"
-            value={newHabilidad.nivelCompetencia}
-            onChange={(e) => setNewHabilidad({ ...newHabilidad, nivelCompetencia: e.target.value })}
-          >
-            <option value="">Seleccionar nivel</option>
-            <option value="Avanzado">Avanzado</option>
-            <option value="Medio">Medio</option>
-            <option value="Básico">Básico</option>
-          </select>
+            placeholder="Fecha de Ingreso a Getronics"
+            value={newProfesional.fechaIngresoGetronics}
+            onChange={(e) => setNewProfesional({ ...newProfesional, fechaIngresoGetronics: e.target.value })}
+          />
         </div>
+
+        <div className="col-md-4">
+          <input
+            type="date"
+            className="form-control"
+            placeholder="Fecha de Egreso de Getronics"
+            value={newProfesional.fechaEgresoGetronics}
+            onChange={(e) => setNewProfesional({ ...newProfesional, fechaEgresoGetronics: e.target.value })}
+          />
+        </div>
+
+        <div className="col-md-4">
+          <label>
+            <input
+              type="checkbox"
+              checked={newProfesional.referido}
+              onChange={(e) => setNewProfesional({ ...newProfesional, referido: e.target.checked })}
+            />{" "}
+            Referido
+          </label>
+        </div>
+
+        <div className="col-md-4">
+          <label>
+            <input
+              type="checkbox"
+              checked={newProfesional.estadoProfesional === 1}
+              onChange={(e) => setNewProfesional({ ...newProfesional, estadoProfesional: e.target.checked ? 1 : 0 })}
+            />{" "}
+            Estado Profesional (1: Activo, 0: Inactivo)
+          </label>
+        </div>
+
+        <div className="col-md-4">
+          <label>Fotografía</label>
+          <input
+            type="file"
+            className="form-control"
+            accept="image/*"
+            onChange={handleFotoChange}
+            required={!editingProfesional}
+          />
+        </div>
+
+        {/* Conocimientos Profesionales */}
         <div className="col-12">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={addHabilidad}
-          >
-            Agregar Habilidad
+          <h5>Conocimientos Profesionales</h5>
+          <button type="button" className="btn btn-secondary" onClick={() => {
+            const nuevoConocimiento = { aniosExperiencia: 0, habilidad: "", nivelCompetencia: "BASICO", tipoHabilidad: "CONOCIMIENTO" };
+            setNewProfesional({ ...newProfesional, conocimientoProfesional: [...newProfesional.conocimientoProfesional, nuevoConocimiento] });
+          }}>
+            Agregar Conocimiento
           </button>
+          {newProfesional.conocimientoProfesional.map((item, index) => (
+            <div key={index} className="row mt-2">
+              <div className="col-md-4">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Habilidad"
+                  value={item.habilidad}
+                  onChange={(e) => {
+                    const conocimientos = [...newProfesional.conocimientoProfesional];
+                    conocimientos[index].habilidad = e.target.value;
+                    setNewProfesional({ ...newProfesional, conocimientoProfesional: conocimientos });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <select
+                  className="form-control"
+                  value={item.nivelCompetencia}
+                  onChange={(e) => {
+                    const conocimientos = [...newProfesional.conocimientoProfesional];
+                    conocimientos[index].nivelCompetencia = e.target.value;
+                    setNewProfesional({ ...newProfesional, conocimientoProfesional: conocimientos });
+                  }}>
+                  <option value="BASICO">Básico</option>
+                  <option value="INTERMEDIO">Intermedio</option>
+                  <option value="AVANZADO">Avanzado</option>
+                </select>
+              </div>
+              <div className="col-md-4">
+                <button type="button" className="btn btn-danger" onClick={() => {
+                  const conocimientos = newProfesional.conocimientoProfesional.filter((_, i) => i !== index);
+                  setNewProfesional({ ...newProfesional, conocimientoProfesional: conocimientos });
+                }}>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Lista de Habilidades Agregadas */}
-        <div>
-          <h5>Habilidades Agregadas:</h5>
-          <ul>
-            {newProfessional.conocimientoTecnicoProfesional.map((habilidad, index) => (
-              <li key={index}>
-                {habilidad.nombre} - {habilidad.nivelCompetencia}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Sección de Idiomas */}
-        <h3>Agregar Idioma</h3>
-        <div className="col-md-4">
-          <label>Idioma</label>
-          <select
-            className="form-control"
-            value={newIdioma.nombre}
-            onChange={(e) => setNewIdioma({ ...newIdioma, nombre: e.target.value })}
-          >
-            <option value="">Seleccionar idioma</option>
-            {idiomas.map((idioma) => (
-              <option key={idioma.id} value={idioma.nombre}>
-                {idioma.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-md-4">
-          <label>Nivel de Dominio</label>
-          <select
-            className="form-control"
-            value={newIdioma.nivelDominio}
-            onChange={(e) => setNewIdioma({ ...newIdioma, nivelDominio: e.target.value })}
-          >
-            <option value="">Seleccionar nivel</option>
-            <option value="Avanzado">Avanzado</option>
-            <option value="Medio">Medio</option>
-            <option value="Básico">Básico</option>
-          </select>
-        </div>
+        {/* Formación Académica Profesional */}
         <div className="col-12">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={addIdioma}
-          >
+          <h5>Formación Académica</h5>
+          <button type="button" className="btn btn-secondary" onClick={() => {
+            const nuevaFormacion = { anioFin: "", anioInicio: "", carrera: "", institucion: "", situacionAcademica: "" };
+            setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: [...newProfesional.formacionAcademicaProfesional, nuevaFormacion] });
+          }}>
+            Agregar Formación Académica
+          </button>
+          {newProfesional.formacionAcademicaProfesional.map((item, index) => (
+            <div key={index} className="row mt-2">
+              <div className="col-md-2">
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Año Inicio"
+                  value={item.anioInicio}
+                  onChange={(e) => {
+                    const formacion = [...newProfesional.formacionAcademicaProfesional];
+                    formacion[index].anioInicio = e.target.value;
+                    setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: formacion });
+                  }}
+                />
+              </div>
+              <div className="col-md-2">
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Año Fin"
+                  value={item.anioFin}
+                  onChange={(e) => {
+                    const formacion = [...newProfesional.formacionAcademicaProfesional];
+                    formacion[index].anioFin = e.target.value;
+                    setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: formacion });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Carrera"
+                  value={item.carrera}
+                  onChange={(e) => {
+                    const formacion = [...newProfesional.formacionAcademicaProfesional];
+                    formacion[index].carrera = e.target.value;
+                    setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: formacion });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Institución"
+                  value={item.institucion}
+                  onChange={(e) => {
+                    const formacion = [...newProfesional.formacionAcademicaProfesional];
+                    formacion[index].institucion = e.target.value;
+                    setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: formacion });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Situación Académica"
+                  value={item.situacionAcademica}
+                  onChange={(e) => {
+                    const formacion = [...newProfesional.formacionAcademicaProfesional];
+                    formacion[index].situacionAcademica = e.target.value;
+                    setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: formacion });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <button type="button" className="btn btn-danger" onClick={() => {
+                  const formacion = newProfesional.formacionAcademicaProfesional.filter((_, i) => i !== index);
+                  setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: formacion });
+                }}>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Idiomas */}
+        <div className="col-12">
+          <h5>Idiomas</h5>
+          <button type="button" className="btn btn-secondary" onClick={() => {
+            const nuevoIdioma = { nombre: "", nivelDominio: "" };
+            setNewProfesional({ ...newProfesional, idiomasProfesional: [...newProfesional.idiomasProfesional, nuevoIdioma] });
+          }}>
             Agregar Idioma
           </button>
+          {newProfesional.idiomasProfesional.map((item, index) => (
+            <div key={index} className="row mt-2">
+              <div className="col-md-6">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Idioma"
+                  value={item.nombre}
+                  onChange={(e) => {
+                    const idiomas = [...newProfesional.idiomasProfesional];
+                    idiomas[index].nombre = e.target.value;
+                    setNewProfesional({ ...newProfesional, idiomasProfesional: idiomas });
+                  }}
+                />
+              </div>
+              <div className="col-md-6">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Nivel de Dominio"
+                  value={item.nivelDominio}
+                  onChange={(e) => {
+                    const idiomas = [...newProfesional.idiomasProfesional];
+                    idiomas[index].nivelDominio = e.target.value;
+                    setNewProfesional({ ...newProfesional, idiomasProfesional: idiomas });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <button type="button" className="btn btn-danger" onClick={() => {
+                  const idiomas = newProfesional.idiomasProfesional.filter((_, i) => i !== index);
+                  setNewProfesional({ ...newProfesional, idiomasProfesional: idiomas });
+                }}>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Lista de Idiomas Agregados */}
+        {/* Experiencia Laboral */}
         <div className="col-12">
-          <h5>Idiomas Agregados:</h5>
-          <ul>
-            {newProfessional.idiomasProfesional.map((idioma, index) => (
-              <li key={index}>{idioma.nombre} - Nivel: {idioma.nivelDominio}</li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Sección de Formación Académica */}
-        <h3>Agregar Formación Académica</h3>
-        <div className="col-md-4">
-          <label>Carrera</label>
-          <input
-            type="text"
-            className="form-control"
-            value={newFormacion.carrera}
-            onChange={(e) =>
-              setNewFormacion({ ...newFormacion, carrera: e.target.value })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Institución</label>
-          <input
-            type="text"
-            className="form-control"
-            value={newFormacion.institucion}
-            onChange={(e) =>
-              setNewFormacion({ ...newFormacion, institucion: e.target.value })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Año de Inicio</label>
-          <input
-            type="number"
-            className="form-control"
-            value={newFormacion.anioInicio}
-            onChange={(e) =>
-              setNewFormacion({ ...newFormacion, anioInicio: e.target.value })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Año de Fin</label>
-          <input
-            type="number"
-            className="form-control"
-            value={newFormacion.anioFin}
-            onChange={(e) =>
-              setNewFormacion({ ...newFormacion, anioFin: e.target.value })
-            }
-          />
-        </div>
-        <div className="col-12">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={addFormacion}
-          >
-            Agregar Formación
+          <h5>Experiencia Laboral</h5>
+          <button type="button" className="btn btn-secondary" onClick={() => {
+            const nuevaExperiencia = { cargo: "", descripcion: "", empresa: "", fechaInicio: "", fechaFin: "" };
+            setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: [...newProfesional.experienciaLaboralProfesional, nuevaExperiencia] });
+          }}>
+            Agregar Experiencia
           </button>
+          {newProfesional.experienciaLaboralProfesional.map((item, index) => (
+            <div key={index} className="row mt-2">
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Cargo"
+                  value={item.cargo}
+                  onChange={(e) => {
+                    const experiencia = [...newProfesional.experienciaLaboralProfesional];
+                    experiencia[index].cargo = e.target.value;
+                    setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: experiencia });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Descripción"
+                  value={item.descripcion}
+                  onChange={(e) => {
+                    const experiencia = [...newProfesional.experienciaLaboralProfesional];
+                    experiencia[index].descripcion = e.target.value;
+                    setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: experiencia });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Empresa"
+                  value={item.empresa}
+                  onChange={(e) => {
+                    const experiencia = [...newProfesional.experienciaLaboralProfesional];
+                    experiencia[index].empresa = e.target.value;
+                    setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: experiencia });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="date"
+                  className="form-control"
+                  placeholder="Fecha Inicio"
+                  value={item.fechaInicio}
+                  onChange={(e) => {
+                    const experiencia = [...newProfesional.experienciaLaboralProfesional];
+                    experiencia[index].fechaInicio = e.target.value;
+                    setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: experiencia });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="date"
+                  className="form-control"
+                  placeholder="Fecha Fin"
+                  value={item.fechaFin}
+                  onChange={(e) => {
+                    const experiencia = [...newProfesional.experienciaLaboralProfesional];
+                    experiencia[index].fechaFin = e.target.value;
+                    setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: experiencia });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <button type="button" className="btn btn-danger" onClick={() => {
+                  const experiencia = newProfesional.experienciaLaboralProfesional.filter((_, i) => i !== index);
+                  setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: experiencia });
+                }}>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Lista de Formación Académica Agregada */}
+        {/* Certificaciones */}
         <div className="col-12">
-          <h5>Formación Académica Agregada:</h5>
-          <ul>
-            {newProfessional.formacionAcademicaProfesional.map((formacion, index) => (
-              <li key={index}>{formacion.carrera} en {formacion.institucion} ({formacion.anioInicio} - {formacion.anioFin})</li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Sección de Certificación */}
-        <h3>Agregar Certificación</h3>
-        <div className="col-md-4">
-          <label>Nombre de Certificación</label>
-          <input
-            type="text"
-            className="form-control"
-            value={newCertificacion.nombreCertificacion}
-            onChange={(e) =>
-              setNewCertificacion({
-                ...newCertificacion,
-                nombreCertificacion: e.target.value,
-              })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Institución Emisora</label>
-          <input
-            type="text"
-            className="form-control"
-            value={newCertificacion.institucionEmisora}
-            onChange={(e) =>
-              setNewCertificacion({
-                ...newCertificacion,
-                institucionEmisora: e.target.value,
-              })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Fecha de Emisión</label>
-          <input
-            type="date"
-            className="form-control"
-            value={newCertificacion.fechaEmision}
-            onChange={(e) =>
-              setNewCertificacion({
-                ...newCertificacion,
-                fechaEmision: e.target.value,
-              })
-            }
-          />
-        </div>
-        <div className="col-md-4">
-          <label>Fecha de Vencimiento</label>
-          <input
-            type="date"
-            className="form-control"
-            value={newCertificacion.fechaVencimiento}
-            onChange={(e) =>
-              setNewCertificacion({
-                ...newCertificacion,
-                fechaVencimiento: e.target.value,
-              })
-            }
-          />
-        </div>
-        <div className="col-12">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={addCertificacion}
-          >
+          <h5>Certificaciones</h5>
+          <button type="button" className="btn btn-secondary" onClick={() => {
+            const nuevaCertificacion = { fechaEmision: "", fechaVencimiento: "", institucionEmisora: "", nombreCertificacion: "" };
+            setNewProfesional({ ...newProfesional, certificacionProfesional: [...newProfesional.certificacionProfesional, nuevaCertificacion] });
+          }}>
             Agregar Certificación
           </button>
+          {newProfesional.certificacionProfesional.map((item, index) => (
+            <div key={index} className="row mt-2">
+              <div className="col-md-3">
+                <input
+                  type="date"
+                  className="form-control"
+                  placeholder="Fecha Emisión"
+                  value={item.fechaEmision}
+                  onChange={(e) => {
+                    const certificacion = [...newProfesional.certificacionProfesional];
+                    certificacion[index].fechaEmision = e.target.value;
+                    setNewProfesional({ ...newProfesional, certificacionProfesional: certificacion });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="date"
+                  className="form-control"
+                  placeholder="Fecha Vencimiento"
+                  value={item.fechaVencimiento}
+                  onChange={(e) => {
+                    const certificacion = [...newProfesional.certificacionProfesional];
+                    certificacion[index].fechaVencimiento = e.target.value;
+                    setNewProfesional({ ...newProfesional, certificacionProfesional: certificacion });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Institución Emisora"
+                  value={item.institucionEmisora}
+                  onChange={(e) => {
+                    const certificacion = [...newProfesional.certificacionProfesional];
+                    certificacion[index].institucionEmisora = e.target.value;
+                    setNewProfesional({ ...newProfesional, certificacionProfesional: certificacion });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Nombre Certificación"
+                  value={item.nombreCertificacion}
+                  onChange={(e) => {
+                    const certificacion = [...newProfesional.certificacionProfesional];
+                    certificacion[index].nombreCertificacion = e.target.value;
+                    setNewProfesional({ ...newProfesional, certificacionProfesional: certificacion });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <button type="button" className="btn btn-danger" onClick={() => {
+                  const certificacion = newProfesional.certificacionProfesional.filter((_, i) => i !== index);
+                  setNewProfesional({ ...newProfesional, certificacionProfesional: certificacion });
+                }}>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Lista de Certificaciones Agregadas */}
+        {/* Referencias */}
         <div className="col-12">
-          <h5>Certificaciones Agregadas:</h5>
-          <ul>
-            {newProfessional.certificacionProfesional.map((certificacion, index) => (
-              <li key={index}>{certificacion.nombreCertificacion} de {certificacion.institucionEmisora} (Emitido: {certificacion.fechaEmision}, Vencimiento: {certificacion.fechaVencimiento})</li>
-            ))}
-          </ul>
+          <h5>Referencias</h5>
+          <button type="button" className="btn btn-secondary" onClick={() => {
+            const nuevaReferencia = { cargo: "", empresa: "", nombreReferente: "", relacionCandidato: "", telefonoContacto: "" };
+            setNewProfesional({ ...newProfesional, referenciaProfesional: [...newProfesional.referenciaProfesional, nuevaReferencia] });
+          }}>
+            Agregar Referencia
+          </button>
+          {newProfesional.referenciaProfesional.map((item, index) => (
+            <div key={index} className="row mt-2">
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Cargo"
+                  value={item.cargo}
+                  onChange={(e) => {
+                    const referencia = [...newProfesional.referenciaProfesional];
+                    referencia[index].cargo = e.target.value;
+                    setNewProfesional({ ...newProfesional, referenciaProfesional: referencia });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Empresa"
+                  value={item.empresa}
+                  onChange={(e) => {
+                    const referencia = [...newProfesional.referenciaProfesional];
+                    referencia[index].empresa = e.target.value;
+                    setNewProfesional({ ...newProfesional, referenciaProfesional: referencia });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Nombre Referente"
+                  value={item.nombreReferente}
+                  onChange={(e) => {
+                    const referencia = [...newProfesional.referenciaProfesional];
+                    referencia[index].nombreReferente = e.target.value;
+                    setNewProfesional({ ...newProfesional, referenciaProfesional: referencia });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Relación con Candidato"
+                  value={item.relacionCandidato}
+                  onChange={(e) => {
+                    const referencia = [...newProfesional.referenciaProfesional];
+                    referencia[index].relacionCandidato = e.target.value;
+                    setNewProfesional({ ...newProfesional, referenciaProfesional: referencia });
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Teléfono de Contacto"
+                  value={item.telefonoContacto}
+                  onChange={(e) => {
+                    const referencia = [...newProfesional.referenciaProfesional];
+                    referencia[index].telefonoContacto = e.target.value;
+                    setNewProfesional({ ...newProfesional, referenciaProfesional: referencia });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <button type="button" className="btn btn-danger" onClick={() => {
+                  const referencia = newProfesional.referenciaProfesional.filter((_, i) => i !== index);
+                  setNewProfesional({ ...newProfesional, referenciaProfesional: referencia });
+                }}>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Botón de envío */}
+        {/* Proyectos, Publicaciones, RRSS, etc. */}
+        {/* Estos pueden añadirse en forma similar si deseas gestionar esos campos también. */}
+        {/* Ejemplo para Proyectos: */}
+
+        <div className="col-12">
+          <h5>Proyectos</h5>
+          <button type="button" className="btn btn-secondary" onClick={() => {
+            const nuevoProyecto = { nombre: "", descripcion: "", fechaInicio: "", fechaFin: "" };
+            setNewProfesional({ ...newProfesional, proyectos: [...newProfesional.proyectos, nuevoProyecto] });
+          }}>
+            Agregar Proyecto
+          </button>
+          {newProfesional.proyectos.map((item, index) => (
+            <div key={index} className="row mt-2">
+              <div className="col-md-4">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Nombre del Proyecto"
+                  value={item.nombre}
+                  onChange={(e) => {
+                    const proyectos = [...newProfesional.proyectos];
+                    proyectos[index].nombre = e.target.value;
+                    setNewProfesional({ ...newProfesional, proyectos });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Descripción"
+                  value={item.descripcion}
+                  onChange={(e) => {
+                    const proyectos = [...newProfesional.proyectos];
+                    proyectos[index].descripcion = e.target.value;
+                    setNewProfesional({ ...newProfesional, proyectos });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <input
+                  type="date"
+                  className="form-control"
+                  placeholder="Fecha Inicio"
+                  value={item.fechaInicio}
+                  onChange={(e) => {
+                    const proyectos = [...newProfesional.proyectos];
+                    proyectos[index].fechaInicio = e.target.value;
+                    setNewProfesional({ ...newProfesional, proyectos });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <input
+                  type="date"
+                  className="form-control"
+                  placeholder="Fecha Fin"
+                  value={item.fechaFin}
+                  onChange={(e) => {
+                    const proyectos = [...newProfesional.proyectos];
+                    proyectos[index].fechaFin = e.target.value;
+                    setNewProfesional({ ...newProfesional, proyectos });
+                  }}
+                />
+              </div>
+              <div className="col-md-4">
+                <button type="button" className="btn btn-danger" onClick={() => {
+                  const proyectos = newProfesional.proyectos.filter((_, i) => i !== index);
+                  setNewProfesional({ ...newProfesional, proyectos });
+                }}>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Jefe de Servicio */}
+        <div className="col-12">
+          <h5>Jefe de Servicio</h5>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Nombre del Jefe de Servicio"
+            value={newProfesional.jefeServicio.nombre || ""}
+            onChange={(e) => setNewProfesional({ ...newProfesional, jefeServicio: { ...newProfesional.jefeServicio, nombre: e.target.value } })}
+          />
+          <input
+            type="text"
+            className="form-control mt-2"
+            placeholder="Cargo del Jefe"
+            value={newProfesional.jefeServicio.cargo || ""}
+            onChange={(e) => setNewProfesional({ ...newProfesional, jefeServicio: { ...newProfesional.jefeServicio, cargo: e.target.value } })}
+          />
+        </div>
+
         <div className="col-12">
           <button type="submit" className="btn btn-primary">
-            Agregar Profesional
+            <i className="fa fa-floppy-o" aria-hidden="true"></i> {editingProfesional ? "Actualizar Profesional" : "Guardar Profesional"}
           </button>
         </div>
       </form>
 
-      {/* Resumen del Profesional */}
-      {professionalSummary && (
-        <div className="mt-5">
-          <div className="card shadow-lg rounded">
-            <div className="card-header bg-primary text-white">
-              <h5>Resumen del Profesional Agregado</h5>
-            </div>
-            <div className="card-body">
-              <ul>
-                <li>
-                  <strong>RUT:</strong> {professionalSummary.rut}
-                </li>
-                <li>
-                  <strong>ID SAP:</strong> {professionalSummary.idSAP}
-                </li>
-                <li>
-                  <strong>Nombres:</strong> {professionalSummary.nombres} {professionalSummary.apaterno} {professionalSummary.amaterno}
-                </li>
-                <li>
-                  <strong>Fecha de Nacimiento:</strong> {professionalSummary.fechaNacimiento}
-                </li>
-                <li>
-                  <strong>Dirección:</strong> {professionalSummary.direccion}
-                </li>
-                <li>
-                  <strong>Teléfono:</strong> {professionalSummary.telefono}
-                </li>
-                <li>
-                  <strong>Correo Electrónico:</strong> {professionalSummary.correoElectronico}
-                </li>
-                <li>
-                  <strong>Años de Experiencia:</strong> {professionalSummary.anioExperiencia}
-                </li>
-                <li>
-                  <strong>Nivel de Experiencia:</strong> {professionalSummary.nivelExperiencia}
-                </li>
-                <li>
-                  <strong>Fecha de Ingreso a Getronics:</strong> {professionalSummary.fechaIngresoGetronics}
-                </li>
-                <li>
-                  <strong>Fecha de Egreso de Getronics:</strong> {professionalSummary.fechaEgresoGetronics}
-                </li>
-                <li>
-                  <strong>Activo:</strong> {professionalSummary.activo ? "Sí" : "No"}
-                </li>
-                <li>
-                  <strong>Referido:</strong> {professionalSummary.referido ? "Sí" : "No"}
-                </li>
-                <li>
-                  <strong>Lista Negra:</strong> {professionalSummary.listaNegra ? "Sí" : "No"}
-                </li>
-                <li>
-                  <strong>Cliente ID:</strong> {professionalSummary.cliente.id}
-                </li>
-                <li>
-                  <strong>Habilidades:</strong>
-                  <ul>
-                    {professionalSummary.conocimientoTecnicoProfesional.map((habilidad, index) => (
-                      <li key={index}>{habilidad.nombre} - {habilidad.nivelCompetencia}</li>
-                    ))}
-                  </ul>
-                </li>
-                <li>
-                  <strong>Idiomas:</strong>
-                  <ul>
-                    {professionalSummary.idiomasProfesional.map((idioma, index) => (
-                      <li key={index}>{idioma.nombre} - Nivel: {idioma.nivelDominio}</li>
-                    ))}
-                  </ul>
-                </li>
-                <li>
-                  <strong>Formación Académica:</strong>
-                  <ul>
-                    {professionalSummary.formacionAcademicaProfesional.map((formacion, index) => (
-                      <li key={index}>{formacion.carrera} en {formacion.institucion} ({formacion.anioInicio} - {formacion.anioFin})</li>
-                    ))}
-                  </ul>
-                </li>
-                <li>
-                  <strong>Certificaciones:</strong>
-                  <ul>
-                    {professionalSummary.certificacionProfesional.map((certificacion, index) => (
-                      <li key={index}>{certificacion.nombreCertificacion} de {certificacion.institucionEmisora} (Emitido: {certificacion.fechaEmision}, Vencimiento: {certificacion.fechaVencimiento})</li>
-                    ))}
-                  </ul>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Barra de búsqueda */}
+      <div className="search-wrapper">
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Buscar por RUT o Nombres"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
-
+      {/* Tabla de profesionales */}
+      <table className="table table-striped">
+        <thead>
+          <tr>
+            <th>RUT</th>
+            <th>Nombres</th>
+            <th>Apellido Paterno</th>
+            <th>Activo</th>
+            <th>Foto</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {profesionales
+            .filter((profesional) => {
+              const searchLowerCase = searchTerm.toLowerCase();
+              return (
+                profesional.rut.toLowerCase().includes(searchLowerCase) ||
+                profesional.nombres.toLowerCase().includes(searchLowerCase) ||
+                profesional.apaterno.toLowerCase().includes(searchLowerCase)
+              );
+            })
+            .map((profesional, index) => (
+              <tr key={index}>
+                <td>{profesional.rut}</td>
+                <td>{profesional.nombres}</td>
+                <td>{profesional.apaterno}</td>
+                <td>{profesional.estadoProfesional === 1 ? "Sí" : "No"}</td>
+                <td>
+                  {profesional.fotografia &&
+                    <img src={`data:image/png;base64,${profesional.fotografia}`} alt="Foto" width="50" height="50" />}
+                </td>
+                <td>
+                  <button className="btn btn-warning" onClick={() => editProfesional(profesional)}>Editar</button>
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-export default AddProfessional;
+export default ProfesionalForm;

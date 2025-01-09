@@ -4,7 +4,7 @@ import axios from "axios";
 const APIURL = "http://localhost:8000";
 
 function ProfesionalForm() {
-  const [profesionales, setProfesionales] = useState([]);
+  const [setProfesionales] = useState([]);
   const [newProfesional, setNewProfesional] = useState({
     idSap: null,
     rut: "",
@@ -35,8 +35,9 @@ function ProfesionalForm() {
     proyectos: [],
     jefeServicio: {}
   });
-  const [searchTerm, setSearchTerm] = useState("");
+  const [resumenProfesionales, setResumenProfesionales] = useState([]);
   const [editingProfesional, setEditingProfesional] = useState(null);
+  const [errorModal, setErrorModal] = useState({ show: false, messages: [] });
 
   const getProfesionales = async () => {
     try {
@@ -75,13 +76,25 @@ function ProfesionalForm() {
           { headers: { "Content-Type": "application/json" } }
         );
         alert("Profesional agregado exitosamente.");
+
+        setResumenProfesionales([...resumenProfesionales, newProfesional]);
       }
 
       resetForm();
       getProfesionales();
     } catch (error) {
       console.error("Error al guardar profesional:", error);
-      alert("Error al guardar profesional.");
+      if (error.response && error.response.data) {
+        setErrorModal({
+          show: true,
+          messages: Object.values(error.response.data)
+        });
+      } else {
+        setErrorModal({
+          show: true,
+          messages: ["Error al guardar profesional. Intente nuevamente."]
+        });
+      }
     }
   };
 
@@ -119,11 +132,6 @@ function ProfesionalForm() {
     setEditingProfesional(null);
   };
 
-  const editProfesional = (profesional) => {
-    setEditingProfesional(profesional);
-    setNewProfesional(profesional);
-  };
-
   const handleJsonUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -131,14 +139,18 @@ function ProfesionalForm() {
       reader.onload = (event) => {
         try {
           const jsonData = JSON.parse(event.target.result);
+
+          // Si el JSON contiene una fotografía en base64, asegúrate de dejarla tal cual.
           setNewProfesional((prev) => ({
             ...prev,
-            ...jsonData
+            ...jsonData,
+            // Asegúrate de que si jsonData.fotografia es una cadena no vacía se use, y si no use la fotografía ya existente.
+            fotografia: jsonData.fotografia || prev.fotografia
           }));
           alert("Archivo JSON cargado exitosamente.");
         } catch (error) {
           console.error("Error al leer el archivo JSON:", error);
-          alert("El archivo no es un JSON válido.");
+          setErrorModal({ show: true, messages: ["El archivo no es un JSON válido."] });
         }
       };
       reader.readAsText(file);
@@ -146,7 +158,6 @@ function ProfesionalForm() {
   };
 
   useEffect(() => {
-    getProfesionales();
   }, []);
 
   return (
@@ -160,9 +171,6 @@ function ProfesionalForm() {
           addOrUpdateProfesional();
         }}
       >
-        {/* Campos del profesional */}
-
-
         {/* Formulario de subida de JSON */}
         <div className="mb-4">
           <label htmlFor="uploadJson" className="form-label">Cargar datos desde archivo JSON</label>
@@ -173,9 +181,9 @@ function ProfesionalForm() {
             accept=".json"
             onChange={handleJsonUpload}
           />
-
         </div>
 
+        {/* Campos del profesional */}
         <div className="col-md-4">
           <input
             type="text"
@@ -183,7 +191,6 @@ function ProfesionalForm() {
             placeholder="RUT"
             value={newProfesional.rut}
             onChange={(e) => setNewProfesional({ ...newProfesional, rut: e.target.value })}
-            required
           />
         </div>
 
@@ -194,7 +201,6 @@ function ProfesionalForm() {
             placeholder="Id Sap"
             value={newProfesional.idSap}
             onChange={(e) => setNewProfesional({ ...newProfesional, idSap: e.target.value })}
-            required
           />
         </div>
 
@@ -205,7 +211,6 @@ function ProfesionalForm() {
             placeholder="Nombres"
             value={newProfesional.nombres}
             onChange={(e) => setNewProfesional({ ...newProfesional, nombres: e.target.value })}
-            required
           />
         </div>
 
@@ -216,7 +221,6 @@ function ProfesionalForm() {
             placeholder="Apellido Paterno"
             value={newProfesional.apaterno}
             onChange={(e) => setNewProfesional({ ...newProfesional, apaterno: e.target.value })}
-            
           />
         </div>
 
@@ -801,10 +805,7 @@ function ProfesionalForm() {
           ))}
         </div>
 
-        {/* Proyectos, Publicaciones, RRSS, etc. */}
-        {/* Estos pueden añadirse en forma similar si deseas gestionar esos campos también. */}
-        {/* Ejemplo para Proyectos: */}
-
+        {/* Proyectos */}
         <div className="col-12">
           <h5>Proyectos</h5>
           <button type="button" className="btn btn-secondary" onClick={() => {
@@ -905,56 +906,113 @@ function ProfesionalForm() {
         </div>
       </form>
 
-      {/* Barra de búsqueda */}
-      <div className="search-wrapper">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Buscar por RUT o Nombres"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      {/* Resumen de Profesionales agregados */}
+      <div className="mt-5">
+        <div className="card shadow-lg rounded">
+          <div className="card-header bg-primary text-white">
+            <h5>Resumen de Profesionales Agregados</h5>
+          </div>
+          <div className="card-body">
+            <ul className="list-group">
+              {resumenProfesionales.map((profesional, index) => (
+                <li key={index} className="list-group-item">
+                  <strong>Nombres:</strong> {profesional.nombres} {profesional.apaterno} {profesional.amaterno} <br />
+                  <strong>RUT:</strong> {profesional.rut} <br />
+                  <strong>Fecha de Nacimiento:</strong> {profesional.fechaNacimiento} <br />
+                  <strong>Nacionalidad:</strong> {profesional.nacionalidad} <br />
+                  <strong>Dirección:</strong> {profesional.direccion} <br />
+                  <strong>Teléfono:</strong> {profesional.telefono} <br />
+                  <strong>Correo Electrónico:</strong> {profesional.correoElectronico} <br />
+                  <strong>Años de Experiencia:</strong> {profesional.anioExperiencia} <br />
+                  <strong>Perfil Profesional:</strong> {profesional.perfilProfesional} <br />
+                  <strong>Nivel de Experiencia:</strong> {profesional.nivelExperiencia} <br />
+                  <strong>Fecha de Ingreso a Getronics:</strong> {profesional.fechaIngresoGetronics} <br />
+                  <strong>Fecha de Egreso de Getronics:</strong> {profesional.fechaEgresoGetronics} <br />
+                  <strong>Fotografía:</strong> <img src={`data:image/png;base64,${profesional.fotografia}`} alt="Fotografía" style={{ width: '50px', height: '50px', borderRadius: '50%' }} /><br />
+                  <strong>Estado Profesional:</strong> {profesional.estadoProfesional === 1 ? "Activo" : "Inactivo"} <br />
+                  <strong>Referido:</strong> {profesional.referido ? "Sí" : "No"} <br />
+                  <strong>Jefe de Servicio:</strong> {profesional.jefeServicio.nombre || "No especificado"} ({profesional.jefeServicio.cargo || "No especificado"})<br />
+                  <strong>Conocimientos Profesionales:</strong>
+                  <ul>
+                    {profesional.conocimientoProfesional.map((conocimiento, idx) => (
+                      <li key={idx}>{conocimiento.habilidad}</li>
+                    ))}
+                  </ul>
+                  <strong>Formación Académica:</strong>
+                  <ul>
+                    {profesional.formacionAcademicaProfesional.map((formacion, idx) => (
+                      <li key={idx}>{formacion.carrera} en {formacion.institucion} ({formacion.anioInicio} - {formacion.anioFin})</li>
+                    ))}
+                  </ul>
+                  <strong>Idiomas:</strong>
+                  <ul>
+                    {profesional.idiomasProfesional.map((idioma, idx) => (
+                      <li key={idx}>{idioma.nombre} - Nivel: {idioma.nivelDominio}</li>
+                    ))}
+                  </ul>
+                  <strong>Experiencia Laboral:</strong>
+                  <ul>
+                    {profesional.experienciaLaboralProfesional.map((experiencia, idx) => (
+                      <li key={idx}>{experiencia.cargo} en {experiencia.empresa}</li>
+                    ))}
+                  </ul>
+                  <strong>Certificaciones:</strong>
+                  <ul>
+                    {profesional.certificacionProfesional.map((certificacion, idx) => (
+                      <li key={idx}>
+                        {certificacion.nombreCertificacion} de {certificacion.institucionEmisora}
+                        (Emitido: {certificacion.fechaEmision}, Vencimiento: {certificacion.fechaVencimiento})
+                      </li>
+                    ))}
+                  </ul>
+                  <strong>Referencias:</strong>
+                  <ul>
+                    {profesional.referenciaProfesional.map((referencia, idx) => (
+                      <li key={idx}>{referencia.nombreReferente} ({referencia.cargo})</li>
+                    ))}
+                  </ul>
+                  <strong>Proyectos:</strong>
+                  <ul>
+                    {profesional.proyectos.map((proyecto, idx) => (
+                      <li key={idx}>{proyecto.nombre}</li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
 
-      {/* Tabla de profesionales */}
-      <table className="table table-striped">
-        <thead>
-          <tr>
-            <th>RUT</th>
-            <th>Nombres</th>
-            <th>Apellido Paterno</th>
-            <th>Activo</th>
-            <th>Foto</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {profesionales
-            .filter((profesional) => {
-              const searchLowerCase = searchTerm.toLowerCase();
-              return (
-                profesional.rut.toLowerCase().includes(searchLowerCase) ||
-                profesional.nombres.toLowerCase().includes(searchLowerCase) ||
-                profesional.apaterno.toLowerCase().includes(searchLowerCase)
-              );
-            })
-            .map((profesional, index) => (
-              <tr key={index}>
-                <td>{profesional.rut}</td>
-                <td>{profesional.nombres}</td>
-                <td>{profesional.apaterno}</td>
-                <td>{profesional.estadoProfesional === 1 ? "Sí" : "No"}</td>
-                <td>
-                  {profesional.fotografia &&
-                    <img src={`data:image/png;base64,${profesional.fotografia}`} alt="Foto" width="50" height="50" />}
-                </td>
-                <td>
-                  <button className="btn btn-warning" onClick={() => editProfesional(profesional)}>Editar</button>
-                </td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
+      {/* Modal de Error */}
+      {errorModal.show && (
+        <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1" role="dialog">
+          <div className="modal-dialog" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Error</h5>
+                <button type="button" className="close" onClick={() => setErrorModal({ show: false, messages: [] })} aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                <ul className="list-group">
+                  {errorModal.messages.map((msg, idx) => (
+                    <li key={idx} className="list-group-item list-group-item-warning">
+                      {msg}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setErrorModal({ show: false, messages: [] })}>
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Link, Navigate } from "react-router-dom";
+import Dashboard from "./func/Dashboard";
+import Login from "./func/Login";
+import PrivateRoute from "./func/PrivateRoute";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../node_modules/font-awesome/css/font-awesome.min.css";
-import { Bar, Line, Radar } from "react-chartjs-2";
+import { Bar, Radar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -19,6 +22,7 @@ import axios from "axios";
 
 import "./App.css";
 import AddProfessional from "./func/AgregarProfesional"; // Componente de Profesionales
+import ModifyProfessional from "./func/ModificarProfesional"; // Componente de Profesionales
 import AddHabilidadesTecnologicas from "./func/AddHabilidadesTecnologicas"; // Componente de Habilidades
 import ListProfessional from "./func/ListarProfesionales"; // Componente de Habilidades
 import Idiomas from "./func/Idiomas"; // Componente de Idiomas
@@ -39,6 +43,7 @@ ChartJS.register(
 );
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentDate, setCurrentDate] = useState("");
   const [stats, setStats] = useState({
     totalProfesionales: 0,
@@ -118,7 +123,6 @@ function App() {
         ...prevStats,
         habilidadesPorCategoria,
       }));
-
 
       setStats((prevStats) => ({
         ...prevStats,
@@ -206,130 +210,90 @@ function App() {
   };
 
   return (
-    <div>
-      <header className="header d-flex justify-content-between align-items-center">
-        <span>Getronics - Gestor de Conocimiento</span>
-        <span>{currentDate}</span>
-      </header>
+    <Router>
+      <div>
+        {isAuthenticated ? (
+          <>
+            <header className="header d-flex justify-content-between align-items-center">
+              <span>Getronics - Gestor de Conocimiento</span>
+              <span>{currentDate}</span>
+            </header>
 
-      <Router>
-        <div className="d-flex">
-          <div className={`sidebar ${isSidebarMinimized ? "minimized" : ""}`}>
-            {/* <button className="toggle-btn" onClick={toggleSidebar}>
-                        {isSidebarMinimized ? ">" : "<"}
-                      </button> */}
-            <ul>
-              <li>
-                <Link to="/">
-                  <i class="fa fa-tachometer" aria-hidden="true"></i> Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link to="#" onClick={toggleProfesionales}>
-                  <i className="fa fa-users" aria-hidden="true"></i> Profesionales
-                  &nbsp;
-                  <i className={`fa fa-chevron-${isProfesionalesOpen ? "up" : "down"}`} aria-hidden="true"></i>
-                </Link>
-                {isProfesionalesOpen && (
-                  <ul className="sublist">
-                    <li>
-                      <Link to="/profesionales/agregar">
-                        <i className="fa fa-plus" aria-hidden="true"></i> Agregar Profesional
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/profesionales/listar">
-                        <i className="fa fa-list" aria-hidden="true"></i> Listar Profesionales
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/profesionales/modificar">
-                        <i className="fa fa-edit" aria-hidden="true"></i> Modificar Profesional
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <Link to="/clientes/crear">
-                  <i class="fa fa-handshake-o" aria-hidden="true"></i> Clientes
-                </Link>
-              </li>
-              <li>
-                <Link to="/habilidades">
-                  <i class="fa fa-lightbulb-o" aria-hidden="true"></i> Conocimientos
-                </Link>
-              </li>
-              <li>
-                <Link to="/idiomas">
-                  <i className="fa fa-language" aria-hidden="true"></i> Idiomas
-                </Link>
-              </li>
+            <div className="d-flex">
+              <div className={`sidebar ${isSidebarMinimized ? "minimized" : ""}`}>
+                <ul>
+                  <li>
+                    <Link to="/">
+                      <i className="fa fa-tachometer" aria-hidden="true"></i> Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="#" onClick={toggleProfesionales}>
+                      <i className="fa fa-users" aria-hidden="true"></i> Profesionales
+                      &nbsp;
+                      <i className={`fa fa-chevron-${isProfesionalesOpen ? "up" : "down"}`} aria-hidden="true"></i>
+                    </Link>
+                    {isProfesionalesOpen && (
+                      <ul className="sublist">
+                        <li>
+                          <Link to="/profesionales/agregar">
+                            <i className="fa fa-plus" aria-hidden="true"></i> Agregar Profesional
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/profesionales/listar">
+                            <i className="fa fa-list" aria-hidden="true"></i> Listar Profesionales
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/profesionales/modificar">
+                            <i className="fa fa-edit" aria-hidden="true"></i> Modificar Profesional
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
+                  </li>
+                  <li>
+                    <Link to="/clientes/crear">
+                      <i className="fa fa-handshake-o" aria-hidden="true"></i> Clientes
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/habilidades">
+                      <i className="fa fa-lightbulb-o" aria-hidden="true"></i> Conocimientos
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/idiomas">
+                      <i className="fa fa-language" aria-hidden="true"></i> Idiomas
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/chat/ask">
+                      <i class="fa fa-question-circle-o" aria-hidden="true"></i> Prometeo
+                    </Link>
+                  </li>
+                </ul>
+              </div>
 
-              <li>
-                <Link to="/chat/ask">
-                  <i class="fa fa-question-circle-o" aria-hidden="true"></i> Prometeo
-                </Link>
-              </li>
-
-            </ul>
-          </div>
-
-          <div className="content">
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <div>
-                    <h1>Dashboard</h1>
-                    {/* Mostrar estadísticas con gráficos */}
-                    <div className="stats-container">
-                      <div className="stat-card">
-                        <h3>Total de Profesionales</h3>
-                        <p>{stats.totalProfesionales}</p>
-                      </div>
-                      <div className="stat-card">
-                        <h3>Promedio de Años de Experiencia</h3>
-                        <p>{stats.promedioExperiencia} años</p>
-                      </div>
-                      <div className="stat-card">
-                        <h3>Total de Habilidades</h3>
-                        <p>{stats.totalHabilidades}</p>
-                      </div>
-                      <div className="stat-card">
-                        <h3>Total de Idiomas</h3>
-                        <p>{stats.totalIdiomas}</p>
-                      </div>
-                    </div>
-
-                    <div className="charts-container">
-                      <div className="chart-card">
-                        <h3>Distribución por Nivel de Experiencia</h3>
-                        <Bar data={barChartDataExperience} />
-                      </div>
-
-                      <div className="chart-card">
-                        <h3>Comparación de Habilidades</h3>
-                        <Radar data={radarChartData} />
-                      </div>
-                      
-                    </div>
-                  </div>
-                }
-              />
-              <Route path="/profesionales/agregar" element={<AddProfessional />} />
-              <Route path="/profesionales/listar" element={<ListProfessional />} />
-              <Route
-                path="/habilidades"
-                element={<AddHabilidadesTecnologicas />}
-              />
-              <Route path="/idiomas" element={<Idiomas />} />
-              <Route path="/clientes/crear" element={<AddCliente />} />
-            </Routes>
-          </div>
-        </div>
-      </Router>
-    </div>
+              <div className="content">
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/profesionales/agregar" element={<AddProfessional />} />
+                  <Route path="/profesionales/listar" element={<ListProfessional />} />
+                  <Route path="/profesionales/modificar" element={<ModifyProfessional />} />
+                  <Route path="/habilidades" element={<AddHabilidadesTecnologicas />} />
+                  <Route path="/idiomas" element={<Idiomas />} />
+                  <Route path="/clientes/crear" element={<AddCliente />} />
+                </Routes>
+              </div>
+            </div>
+          </>
+        ) : (
+          <Login setIsAuthenticated={setIsAuthenticated} />
+        )}
+      </div>
+    </Router>
   );
 }
 

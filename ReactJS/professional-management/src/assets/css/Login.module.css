@@ -1,0 +1,93 @@
+.container {
+    background-color: #000000;
+    border-radius: 8px;
+    padding: 30px 20px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .background {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url('../images/GetronicsPeople.jpg'); /* Ruta de la imagen de fondo */
+    background-size: cover;
+    background-position: center;
+    filter: blur(0px);
+    z-index: -1;
+  }
+
+  .background::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: inherit;
+    background-size: inherit;
+    background-position: inherit;
+    filter: blur(4px);
+    z-index: -1; 
+  }
+  
+  .title {
+    margin-top: -10px;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #02e600;
+    font-weight: bold;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #555;
+    border-radius: 5px;
+    background-color: #ffffff;
+    color: #fff;
+  }
+
+  
+  .button {
+    width: 60%;
+    padding: 12px;
+    background-color: #02e600;
+    border: none;
+    border-radius: 0px;
+    font-size: 16px;
+    color: #000000;
+    font-weight: bold;
+    transition: background-color 0.3s;
+  }
+  
+  .button:hover {
+    background-color: #03aa00;
+    color: white;
+  }
+  
+  
+  .login-form input {
+    text-align: center;
+    width: 60%;
+    margin-left: 20%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  .logo{
+    max-width: 40%;
+    margin-top: -20px;
+    margin-bottom: 5px;
+  }
+  
+  

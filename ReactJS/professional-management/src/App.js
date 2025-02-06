@@ -1,25 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, Link, Navigate } from "react-router-dom";
-import Dashboard from "./func/Dashboard";
+import { BrowserRouter as Router, Route, Routes, Link, Navigate, useNavigate } from "react-router-dom";
 import Login from "./func/Login";
 import PrivateRoute from "./func/PrivateRoute";
+import { AuthProvider } from "./auth/AuthProvider";
 import "bootstrap/dist/css/bootstrap.min.css";
+import Dropdown from "react-bootstrap/Dropdown";
 import "../node_modules/font-awesome/css/font-awesome.min.css";
 import { Bar, Radar } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  RadialLinearScale,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, RadialLinearScale, Title, Tooltip, Legend } from "chart.js";
 import axios from "axios";
-
 import "./App.css";
 import AddProfessional from "./func/AgregarProfesional"; // Componente de Profesionales
 import ModifyProfessional from "./func/ModificarProfesional"; // Componente de Profesionales
@@ -30,21 +19,11 @@ import Idiomas from "./func/Idiomas"; // Componente de Idiomas
 
 import AddCliente from "./func/Cliente";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  RadialLinearScale,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, RadialLinearScale, Title, Tooltip, Legend);
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentDate, setCurrentDate] = useState("");
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalProfesionales: 0,
     promedioExperiencia: 0,
@@ -58,19 +37,27 @@ function App() {
     habilidadesPorCategoria: {},
   });
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setIsAuthenticated(false);
+    navigate("/login"); // Redirige al usuario a la página de login
+  };
+
   useEffect(() => {
     const date = new Date();
     const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-    setCurrentDate(formattedDate);
 
-    // Obtener las estadísticas
-    getProfessionals();
-    getHabilidadesTecnologicas();
-    getIdiomas();
+    // Obtener las estadísticas *Mover desde app.js hacia componente dashboard
+    // getProfessionals();
+    // getHabilidadesTecnologicas();
+    // getIdiomas();
   }, []);
 
   const [isProfesionalesOpen, setProfesionalesOpen] = useState(false);
   const [isSidebarMinimized, setSidebarMinimized] = useState(false);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const username = user ? user?.username : "";
 
   const toggleProfesionales = () => {
     setProfesionalesOpen(!isProfesionalesOpen);
@@ -78,15 +65,11 @@ function App() {
 
   const getProfessionals = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:8000/api/profesional/listarTodos"
-      );
+      const response = await axios.get("http://localhost:8000/api/profesional/listarTodos");
       const data = response.data;
 
       const totalProfesionales = data.length;
-      const promedioExperiencia =
-        data.reduce((sum, prof) => sum + Number(prof.anioExperiencia), 0) /
-        totalProfesionales;
+      const promedioExperiencia = data.reduce((sum, prof) => sum + Number(prof.anioExperiencia), 0) / totalProfesionales;
 
       const nivelExperiencia = {
         Junior: data.filter((prof) => prof.nivelExperiencia === "Junior").length,
@@ -107,14 +90,12 @@ function App() {
 
   const getHabilidadesTecnologicas = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:8000/api/habilidadesTecnologicas/listarTodas"
-      );
+      const response = await axios.get("http://localhost:8000/api/habilidadesTecnologicas/listarTodas");
       const habilidades = response.data;
 
       const totalHabilidades = habilidades.length;
       const habilidadesPorCategoria = habilidades.reduce((acc, habilidad) => {
-        const categoria = habilidad.categoria || "Sin categoría";  // Si no tiene categoría, asigna "Sin categoría"
+        const categoria = habilidad.categoria || "Sin categoría"; // Si no tiene categoría, asigna "Sin categoría"
         acc[categoria] = (acc[categoria] || 0) + 1;
         return acc;
       }, {});
@@ -136,9 +117,7 @@ function App() {
 
   const getIdiomas = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:8000/api/idiomas/listar"
-      );
+      const response = await axios.get("http://localhost:8000/api/idiomas/listar");
       const totalIdiomas = response.data.length;
 
       setStats((prevStats) => ({
@@ -156,11 +135,7 @@ function App() {
     datasets: [
       {
         label: "Distribución por Nivel de Experiencia",
-        data: [
-          stats.nivelExperiencia.Junior,
-          stats.nivelExperiencia.Semisenior,
-          stats.nivelExperiencia.Senior,
-        ],
+        data: [stats.nivelExperiencia.Junior, stats.nivelExperiencia.Semisenior, stats.nivelExperiencia.Senior],
         backgroundColor: ["#FF5733", "#FFBD33", "#33FF57"],
         borderColor: ["#FF5733", "#FFBD33", "#33FF57"],
         borderWidth: 1,
@@ -209,14 +184,24 @@ function App() {
     ],
   };
 
+
   return (
-    <Router>
       <div>
         {isAuthenticated ? (
           <>
             <header className="header d-flex justify-content-between align-items-center">
               <span>Getronics - Gestor de Conocimiento</span>
-              <span>{currentDate}</span>
+              <Dropdown>
+                <Dropdown.Toggle variant="success" id="dropdown-basic">
+                {username}
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  {/* <Dropdown.Item href="#/action-1">Configuración</Dropdown.Item>
+                  <Dropdown.Item href="#/action-2">Contacto</Dropdown.Item>
+                  <Dropdown.Divider /> */}
+                  <Dropdown.Item href="#/action-3" onClick={handleLogout}>Cerrar Sesión</Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
             </header>
 
             <div className="d-flex">
@@ -229,8 +214,7 @@ function App() {
                   </li>
                   <li>
                     <Link to="#" onClick={toggleProfesionales}>
-                      <i className="fa fa-users" aria-hidden="true"></i> Profesionales
-                      &nbsp;
+                      <i className="fa fa-users" aria-hidden="true"></i> Profesionales &nbsp;
                       <i className={`fa fa-chevron-${isProfesionalesOpen ? "up" : "down"}`} aria-hidden="true"></i>
                     </Link>
                     {isProfesionalesOpen && (
@@ -270,7 +254,7 @@ function App() {
                   </li>
                   <li>
                     <Link to="/chat/ask">
-                      <i class="fa fa-question-circle-o" aria-hidden="true"></i> Prometeo
+                      <i className="fa fa-question-circle-o" aria-hidden="true"></i> Prometeo
                     </Link>
                   </li>
                 </ul>
@@ -278,7 +262,46 @@ function App() {
 
               <div className="content">
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
+                  <Route
+                    path="/"
+                    element={
+                      <div>
+                        <h1>Bienvenido</h1>
+                        {/* Mostrar estadísticas con gráficos */}
+                        <div className="stats-container">
+                          <div className="stat-card">
+                            <h3>Total de Profesionales</h3>
+                            <p>{stats.totalProfesionales}</p>
+                          </div>
+                          <div className="stat-card">
+                            <h3>Promedio de Años de Experiencia</h3>
+                            <p>{stats.promedioExperiencia} años</p>
+                          </div>
+                          <div className="stat-card">
+                            <h3>Total de Habilidades</h3>
+                            <p>{stats.totalHabilidades}</p>
+                          </div>
+                          <div className="stat-card">
+                            <h3>Total de Idiomas</h3>
+                            <p>{stats.totalIdiomas}</p>
+                          </div>
+                        </div>
+
+                        <div className="charts-container">
+                          <div className="chart-card">
+                            <h3>Distribución por Nivel de Experiencia</h3>
+                            <Bar data={barChartDataExperience} />
+                          </div>
+
+                          <div className="chart-card">
+                            <h3>Comparación de Habilidades</h3>
+                            <Radar data={radarChartData} />
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  />
+                  <Route path="/login" element={<Login />} />
                   <Route path="/profesionales/agregar" element={<AddProfessional />} />
                   <Route path="/profesionales/listar" element={<ListProfessional />} />
                   <Route path="/profesionales/modificar" element={<ModifyProfessional />} />
@@ -293,7 +316,6 @@ function App() {
           <Login setIsAuthenticated={setIsAuthenticated} />
         )}
       </div>
-    </Router>
   );
 }
 

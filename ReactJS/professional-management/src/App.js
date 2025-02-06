@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import { BrowserRouter as Router, Route, Routes, Link, Navigate, useNavigate } from "react-router-dom";
 import Login from "./func/Login";
 import PrivateRoute from "./func/PrivateRoute";
@@ -9,15 +10,17 @@ import "../node_modules/font-awesome/css/font-awesome.min.css";
 import { Bar, Radar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, RadialLinearScale, Title, Tooltip, Legend } from "chart.js";
 import axios from "axios";
-import "./App.css";
+// import "./App.css";
+import "./style.css";
+
 import AddProfessional from "./func/AgregarProfesional"; // Componente de Profesionales
 import ModifyProfessional from "./func/ModificarProfesional"; // Componente de Profesionales
 import AddHabilidadesTecnologicas from "./func/AddHabilidadesTecnologicas"; // Componente de Habilidades
 import ListProfessional from "./func/ListarProfesionales"; // Componente de Habilidades
 import Idiomas from "./func/Idiomas"; // Componente de Idiomas
-//import ChatGpt from "./chatgpt/DynamicChat";
-
 import AddCliente from "./func/Cliente";
+
+//import ChatGpt from "./chatgpt/DynamicChat";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, RadialLinearScale, Title, Tooltip, Legend);
 
@@ -61,6 +64,11 @@ function App() {
 
   const toggleProfesionales = () => {
     setProfesionalesOpen(!isProfesionalesOpen);
+  };
+
+  // Define la función toggleSidebar
+  const toggleSidebar = () => {
+    setSidebarMinimized(!isSidebarMinimized);
   };
 
   const getProfessionals = async () => {
@@ -186,121 +194,104 @@ function App() {
 
 
   return (
-      <div>
+      <div className="container-fluid">
         {isAuthenticated ? (
           <>
-            <header className="header d-flex justify-content-between align-items-center">
+            <header className="d-flex justify-content-between align-items-center bg-dark text-white p-3">
               <span>Getronics - Gestor de Conocimiento</span>
               <Dropdown>
                 <Dropdown.Toggle variant="success" id="dropdown-basic">
                 {username}
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
-                  {/* <Dropdown.Item href="#/action-1">Configuración</Dropdown.Item>
-                  <Dropdown.Item href="#/action-2">Contacto</Dropdown.Item>
-                  <Dropdown.Divider /> */}
                   <Dropdown.Item href="#/action-3" onClick={handleLogout}>Cerrar Sesión</Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
             </header>
 
-            <div className="d-flex">
-              <div className={`sidebar ${isSidebarMinimized ? "minimized" : ""}`}>
-                <ul>
-                  <li>
-                    <Link to="/">
+            <div className="row">
+              <nav className={`col-md-3 col-lg-2 d-md-block bg-light sidebar ${isSidebarMinimized ? "d-none" : ""}`}>
+                <button className="btn btn-primary d-md-none" onClick={toggleSidebar}>☰</button>
+                <ul className="nav flex-column">
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/">
                       <i className="fa fa-tachometer" aria-hidden="true"></i> Dashboard
                     </Link>
                   </li>
-                  <li>
-                    <Link to="#" onClick={toggleProfesionales}>
-                      <i className="fa fa-users" aria-hidden="true"></i> Profesionales &nbsp;
-                      <i className={`fa fa-chevron-${isProfesionalesOpen ? "up" : "down"}`} aria-hidden="true"></i>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="#" onClick={toggleProfesionales}>
+                      <i className="fa fa-users" aria-hidden="true"></i> Profesionales &nbsp; <i className={`fa fa-chevron-${isProfesionalesOpen ? "up" : "down"}`} aria-hidden="true"></i>
                     </Link>
                     {isProfesionalesOpen && (
-                      <ul className="sublist">
-                        <li>
-                          <Link to="/profesionales/agregar">
-                            <i className="fa fa-plus" aria-hidden="true"></i> Agregar Profesional
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/profesionales/listar">
-                            <i className="fa fa-list" aria-hidden="true"></i> Listar Profesionales
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/profesionales/modificar">
-                            <i className="fa fa-edit" aria-hidden="true"></i> Modificar Profesional
-                          </Link>
-                        </li>
+                      <ul className="nav flex-column ms-3">
+                        <li><Link className="nav-link" to="/profesionales/agregar">Agregar Profesional</Link></li>
+                        <li><Link className="nav-link" to="/profesionales/listar">Listar Profesionales</Link></li>
+                        <li><Link className="nav-link" to="/profesionales/modificar">Modificar Profesional</Link></li>
                       </ul>
                     )}
                   </li>
-                  <li>
-                    <Link to="/clientes/crear">
-                      <i className="fa fa-handshake-o" aria-hidden="true"></i> Clientes
-                    </Link>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/clientes/crear"><i className="fa fa-handshake-o" aria-hidden="true"></i> Clientes</Link>
                   </li>
-                  <li>
-                    <Link to="/habilidades">
-                      <i className="fa fa-lightbulb-o" aria-hidden="true"></i> Conocimientos
-                    </Link>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/habilidades"><i className="fa fa-lightbulb-o" aria-hidden="true"></i> Conocimientos</Link>
                   </li>
-                  <li>
-                    <Link to="/idiomas">
-                      <i className="fa fa-language" aria-hidden="true"></i> Idiomas
-                    </Link>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/idiomas"><i className="fa fa-language" aria-hidden="true"></i> Idiomas</Link>
                   </li>
-                  <li>
-                    <Link to="/chat/ask">
-                      <i className="fa fa-question-circle-o" aria-hidden="true"></i> Prometeo
-                    </Link>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/chat/ask"><i className="fa fa-question-circle-o" aria-hidden="true"></i> Prometeo</Link>
                   </li>
                 </ul>
-              </div>
+              </nav>
 
-              <div className="content">
+              <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <Routes>
-                  <Route
-                    path="/"
-                    element={
+                  <Route path="/" element={
                       <div>
                         <h1>Bienvenido</h1>
-                        {/* Mostrar estadísticas con gráficos */}
-                        <div className="stats-container">
-                          <div className="stat-card">
-                            <h3>Total de Profesionales</h3>
-                            <p>{stats.totalProfesionales}</p>
+                        <div className="row g-3">
+                          <div className="col-md-6 col-lg-3">
+                            <div className="card p-3">
+                              <h3>Total de Profesionales</h3>
+                              <p>{stats.totalProfesionales}</p>  
+                            </div>
                           </div>
-                          <div className="stat-card">
-                            <h3>Promedio de Años de Experiencia</h3>
-                            <p>{stats.promedioExperiencia} años</p>
+                          <div className="col-md-6 col-lg-3">
+                            <div className="card p-3">
+                              <h3>Promedio de Años de Experiencia</h3>
+                              <p>{stats.promedioExperiencia} años</p>
+                            </div>
                           </div>
-                          <div className="stat-card">
-                            <h3>Total de Habilidades</h3>
-                            <p>{stats.totalHabilidades}</p>
+                          <div className="col-md-6 col-lg-3">
+                            <div className="card p-3">
+                              <h3>Total de Habilidades</h3>
+                              <p>{stats.totalHabilidades}</p>
+                            </div>
                           </div>
-                          <div className="stat-card">
-                            <h3>Total de Idiomas</h3>
-                            <p>{stats.totalIdiomas}</p>
+                          <div className="col-md-6 col-lg-3">
+                            <div className="card p-3">
+                              <h3>Total de Idiomas</h3>
+                              <p>{stats.totalIdiomas}</p>
+                            </div>
                           </div>
                         </div>
-
-                        <div className="charts-container">
-                          <div className="chart-card">
-                            <h3>Distribución por Nivel de Experiencia</h3>
-                            <Bar data={barChartDataExperience} />
+                        <div className="row mt-4">
+                          <div className="col-md-6">
+                            <div className="card p-3">
+                              <h3>Distribución por Nivel de Experiencia</h3>
+                              <Bar data={barChartDataExperience} />
+                            </div>
                           </div>
-
-                          <div className="chart-card">
-                            <h3>Comparación de Habilidades</h3>
-                            <Radar data={radarChartData} />
+                          <div className="col-md-6">
+                            <div className="card p-3">
+                              <h3>Comparación de Habilidades</h3>
+                              <Radar data={radarChartData} />
+                            </div>
                           </div>
                         </div>
                       </div>
-                    }
-                  />
+                    } />
                   <Route path="/login" element={<Login />} />
                   <Route path="/profesionales/agregar" element={<AddProfessional />} />
                   <Route path="/profesionales/listar" element={<ListProfessional />} />
@@ -309,7 +300,7 @@ function App() {
                   <Route path="/idiomas" element={<Idiomas />} />
                   <Route path="/clientes/crear" element={<AddCliente />} />
                 </Routes>
-              </div>
+              </main>
             </div>
           </>
         ) : (

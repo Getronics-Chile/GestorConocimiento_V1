@@ -1,5 +1,17 @@
 .header-title {
     font-size: 24px;
     font-weight: bold;
-    color: #03aa00;
+    color: #02e600;
+  }
+
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .container-fluid {
+    padding-left: 0;
+    padding-right: 0;
   }

@@ -11,7 +11,7 @@ import { Bar, Radar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, RadialLinearScale, Title, Tooltip, Legend } from "chart.js";
 import axios from "axios";
 // import "./App.css";
-import "./style.css";
+import './assets/css/Header.css';
 
 import AddProfessional from "./func/AgregarProfesional"; // Componente de Profesionales
 import ModifyProfessional from "./func/ModificarProfesional"; // Componente de Profesionales
@@ -198,7 +198,7 @@ function App() {
         {isAuthenticated ? (
           <>
             <header className="d-flex justify-content-between align-items-center bg-dark text-white p-3">
-              <span>Getronics - Gestor de Conocimiento</span>
+            <span className="header-title">Gestor de Conocimiento</span>
               <Dropdown>
                 <Dropdown.Toggle variant="success" id="dropdown-basic">
                 {username}

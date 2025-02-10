@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 const APIURL = "http://localhost:8000";
@@ -33,7 +33,7 @@ function ProfesionalForm() {
     publicacionesProfesional: [],
     rrssPortafolioProfesional: [],
     proyectos: [],
-    jefeServicio: {}
+    jefeServicio: {},
   });
   const [resumenProfesionales, setResumenProfesionales] = useState([]);
   const [editingProfesional, setEditingProfesional] = useState(null);
@@ -53,7 +53,7 @@ function ProfesionalForm() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64Foto = reader.result.split(',')[1];
+        const base64Foto = reader.result.split(",")[1];
         setNewProfesional({ ...newProfesional, fotografia: base64Foto });
       };
       reader.readAsDataURL(file);
@@ -63,18 +63,10 @@ function ProfesionalForm() {
   const addOrUpdateProfesional = async () => {
     try {
       if (editingProfesional) {
-        await axios.put(
-          `${APIURL}/api/profesional/actualizar/${editingProfesional.id}`,
-          newProfesional,
-          { headers: { "Content-Type": "application/json" } }
-        );
+        await axios.put(`${APIURL}/api/profesional/actualizar/${editingProfesional.id}`, newProfesional, { headers: { "Content-Type": "application/json" } });
         alert("Profesional actualizado exitosamente.");
       } else {
-        await axios.post(
-          `${APIURL}/api/profesional/crear`,
-          newProfesional,
-          { headers: { "Content-Type": "application/json" } }
-        );
+        await axios.post(`${APIURL}/api/profesional/crear`, newProfesional, { headers: { "Content-Type": "application/json" } });
         alert("Profesional agregado exitosamente.");
 
         setResumenProfesionales([...resumenProfesionales, newProfesional]);
@@ -87,12 +79,12 @@ function ProfesionalForm() {
       if (error.response && error.response.data) {
         setErrorModal({
           show: true,
-          messages: Object.values(error.response.data)
+          messages: Object.values(error.response.data),
         });
       } else {
         setErrorModal({
           show: true,
-          messages: ["Error al guardar profesional. Intente nuevamente."]
+          messages: ["Error al guardar profesional. Intente nuevamente."],
         });
       }
     }
@@ -127,9 +119,41 @@ function ProfesionalForm() {
       publicacionesProfesional: [],
       rrssPortafolioProfesional: [],
       proyectos: [],
-      jefeServicio: {}
+      jefeServicio: {},
     });
     setEditingProfesional(null);
+  };
+
+  const [rut, setRut] = useState("");
+  const [error, setError] = useState("");
+  const rutRef = useRef(null);
+
+  const validateRut = (rut) => {
+    const rutRegex = /^[0-9]{7,8}-[0-9Kk]$/;
+    return rutRegex.test(rut);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "rut") {
+      setRut(value);
+      if (!validateRut(value)) {
+        setError("RUT inválido");
+      } else {
+        setError("");
+      }
+    }
+    setNewProfesional({ ...newProfesional, [name]: value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!validateRut(newProfesional.rut)) {
+      setError("RUT inválido");
+      rutRef.current.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    addOrUpdateProfesional();
   };
 
   const handleJsonUpload = (e) => {
@@ -145,7 +169,7 @@ function ProfesionalForm() {
             ...prev,
             ...jsonData,
             // Asegúrate de que si jsonData.fotografia es una cadena no vacía se use, y si no use la fotografía ya existente.
-            fotografia: jsonData.fotografia || prev.fotografia
+            fotografia: jsonData.fotografia || prev.fotografia,
           }));
           alert("Archivo JSON cargado exitosamente.");
         } catch (error) {
@@ -157,8 +181,7 @@ function ProfesionalForm() {
     }
   };
 
-  useEffect(() => {
-  }, []);
+  useEffect(() => {}, []);
 
   return (
     <div>
@@ -168,30 +191,30 @@ function ProfesionalForm() {
         className="row g-3 mb-4"
         onSubmit={(e) => {
           e.preventDefault();
-          addOrUpdateProfesional();
+          handleSubmit(e);
         }}
       >
         {/* Formulario de subida de JSON */}
         <div className="mb-4">
-          <label htmlFor="uploadJson" className="form-label">Cargar datos desde archivo JSON</label>
-          <input
-            type="file"
-            id="uploadJson"
-            className="form-control"
-            accept=".json"
-            onChange={handleJsonUpload}
-          />
+          <label htmlFor="uploadJson" className="form-label">
+            Cargar datos desde archivo JSON
+          </label>
+          <input type="file" id="uploadJson" className="form-control" accept=".json" onChange={handleJsonUpload} />
         </div>
 
         {/* Campos del profesional */}
         <div className="col-md-4">
           <input
-            type="text"
             className="form-control"
+            type="text"
+            id="rut"
+            name="rut"
             placeholder="RUT"
             value={newProfesional.rut}
-            onChange={(e) => setNewProfesional({ ...newProfesional, rut: e.target.value })}
+            onChange={handleInputChange}
+            ref={rutRef}
           />
+          {error && <span style={{ color: "red" }}>{error}</span>}
         </div>
 
         <div className="col-md-4">
@@ -336,11 +359,7 @@ function ProfesionalForm() {
 
         <div className="col-md-4">
           <label>
-            <input
-              type="checkbox"
-              checked={newProfesional.referido}
-              onChange={(e) => setNewProfesional({ ...newProfesional, referido: e.target.checked })}
-            />{" "}
+            <input type="checkbox" checked={newProfesional.referido} onChange={(e) => setNewProfesional({ ...newProfesional, referido: e.target.checked })} />{" "}
             Referido
           </label>
         </div>
@@ -358,22 +377,20 @@ function ProfesionalForm() {
 
         <div className="col-md-4">
           <label>Fotografía</label>
-          <input
-            type="file"
-            className="form-control"
-            accept="image/*"
-            onChange={handleFotoChange}
-            required={!editingProfesional}
-          />
+          <input type="file" className="form-control" accept="image/*" onChange={handleFotoChange} required={!editingProfesional} />
         </div>
 
         {/* Conocimientos Profesionales */}
         <div className="col-12">
           <h5>Conocimientos Profesionales</h5>
-          <button type="button" className="btn btn-secondary" onClick={() => {
-            const nuevoConocimiento = { aniosExperiencia: 0, habilidad: "", nivelCompetencia: "BASICO", tipoHabilidad: "CONOCIMIENTO" };
-            setNewProfesional({ ...newProfesional, conocimientoProfesional: [...newProfesional.conocimientoProfesional, nuevoConocimiento] });
-          }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              const nuevoConocimiento = { aniosExperiencia: 0, habilidad: "", nivelCompetencia: "BASICO", tipoHabilidad: "CONOCIMIENTO" };
+              setNewProfesional({ ...newProfesional, conocimientoProfesional: [...newProfesional.conocimientoProfesional, nuevoConocimiento] });
+            }}
+          >
             Agregar Conocimiento
           </button>
           {newProfesional.conocimientoProfesional.map((item, index) => (
@@ -399,17 +416,22 @@ function ProfesionalForm() {
                     const conocimientos = [...newProfesional.conocimientoProfesional];
                     conocimientos[index].nivelCompetencia = e.target.value;
                     setNewProfesional({ ...newProfesional, conocimientoProfesional: conocimientos });
-                  }}>
+                  }}
+                >
                   <option value="BASICO">Básico</option>
                   <option value="INTERMEDIO">Intermedio</option>
                   <option value="AVANZADO">Avanzado</option>
                 </select>
               </div>
               <div className="col-md-4">
-                <button type="button" className="btn btn-danger" onClick={() => {
-                  const conocimientos = newProfesional.conocimientoProfesional.filter((_, i) => i !== index);
-                  setNewProfesional({ ...newProfesional, conocimientoProfesional: conocimientos });
-                }}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => {
+                    const conocimientos = newProfesional.conocimientoProfesional.filter((_, i) => i !== index);
+                    setNewProfesional({ ...newProfesional, conocimientoProfesional: conocimientos });
+                  }}
+                >
                   Eliminar
                 </button>
               </div>
@@ -420,10 +442,14 @@ function ProfesionalForm() {
         {/* Formación Académica Profesional */}
         <div className="col-12">
           <h5>Formación Académica</h5>
-          <button type="button" className="btn btn-secondary" onClick={() => {
-            const nuevaFormacion = { anioFin: "", anioInicio: "", carrera: "", institucion: "", situacionAcademica: "" };
-            setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: [...newProfesional.formacionAcademicaProfesional, nuevaFormacion] });
-          }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              const nuevaFormacion = { anioFin: "", anioInicio: "", carrera: "", institucion: "", situacionAcademica: "" };
+              setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: [...newProfesional.formacionAcademicaProfesional, nuevaFormacion] });
+            }}
+          >
             Agregar Formación Académica
           </button>
           {newProfesional.formacionAcademicaProfesional.map((item, index) => (
@@ -494,10 +520,14 @@ function ProfesionalForm() {
                 />
               </div>
               <div className="col-md-4">
-                <button type="button" className="btn btn-danger" onClick={() => {
-                  const formacion = newProfesional.formacionAcademicaProfesional.filter((_, i) => i !== index);
-                  setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: formacion });
-                }}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => {
+                    const formacion = newProfesional.formacionAcademicaProfesional.filter((_, i) => i !== index);
+                    setNewProfesional({ ...newProfesional, formacionAcademicaProfesional: formacion });
+                  }}
+                >
                   Eliminar
                 </button>
               </div>
@@ -508,10 +538,14 @@ function ProfesionalForm() {
         {/* Idiomas */}
         <div className="col-12">
           <h5>Idiomas</h5>
-          <button type="button" className="btn btn-secondary" onClick={() => {
-            const nuevoIdioma = { nombre: "", nivelDominio: "" };
-            setNewProfesional({ ...newProfesional, idiomasProfesional: [...newProfesional.idiomasProfesional, nuevoIdioma] });
-          }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              const nuevoIdioma = { nombre: "", nivelDominio: "" };
+              setNewProfesional({ ...newProfesional, idiomasProfesional: [...newProfesional.idiomasProfesional, nuevoIdioma] });
+            }}
+          >
             Agregar Idioma
           </button>
           {newProfesional.idiomasProfesional.map((item, index) => (
@@ -543,10 +577,14 @@ function ProfesionalForm() {
                 />
               </div>
               <div className="col-md-4">
-                <button type="button" className="btn btn-danger" onClick={() => {
-                  const idiomas = newProfesional.idiomasProfesional.filter((_, i) => i !== index);
-                  setNewProfesional({ ...newProfesional, idiomasProfesional: idiomas });
-                }}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => {
+                    const idiomas = newProfesional.idiomasProfesional.filter((_, i) => i !== index);
+                    setNewProfesional({ ...newProfesional, idiomasProfesional: idiomas });
+                  }}
+                >
                   Eliminar
                 </button>
               </div>
@@ -557,10 +595,14 @@ function ProfesionalForm() {
         {/* Experiencia Laboral */}
         <div className="col-12">
           <h5>Experiencia Laboral</h5>
-          <button type="button" className="btn btn-secondary" onClick={() => {
-            const nuevaExperiencia = { cargo: "", descripcion: "", empresa: "", fechaInicio: "", fechaFin: "" };
-            setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: [...newProfesional.experienciaLaboralProfesional, nuevaExperiencia] });
-          }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              const nuevaExperiencia = { cargo: "", descripcion: "", empresa: "", fechaInicio: "", fechaFin: "" };
+              setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: [...newProfesional.experienciaLaboralProfesional, nuevaExperiencia] });
+            }}
+          >
             Agregar Experiencia
           </button>
           {newProfesional.experienciaLaboralProfesional.map((item, index) => (
@@ -631,10 +673,14 @@ function ProfesionalForm() {
                 />
               </div>
               <div className="col-md-4">
-                <button type="button" className="btn btn-danger" onClick={() => {
-                  const experiencia = newProfesional.experienciaLaboralProfesional.filter((_, i) => i !== index);
-                  setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: experiencia });
-                }}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => {
+                    const experiencia = newProfesional.experienciaLaboralProfesional.filter((_, i) => i !== index);
+                    setNewProfesional({ ...newProfesional, experienciaLaboralProfesional: experiencia });
+                  }}
+                >
                   Eliminar
                 </button>
               </div>
@@ -645,10 +691,14 @@ function ProfesionalForm() {
         {/* Certificaciones */}
         <div className="col-12">
           <h5>Certificaciones</h5>
-          <button type="button" className="btn btn-secondary" onClick={() => {
-            const nuevaCertificacion = { fechaEmision: "", fechaVencimiento: "", institucionEmisora: "", nombreCertificacion: "" };
-            setNewProfesional({ ...newProfesional, certificacionProfesional: [...newProfesional.certificacionProfesional, nuevaCertificacion] });
-          }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              const nuevaCertificacion = { fechaEmision: "", fechaVencimiento: "", institucionEmisora: "", nombreCertificacion: "" };
+              setNewProfesional({ ...newProfesional, certificacionProfesional: [...newProfesional.certificacionProfesional, nuevaCertificacion] });
+            }}
+          >
             Agregar Certificación
           </button>
           {newProfesional.certificacionProfesional.map((item, index) => (
@@ -706,10 +756,14 @@ function ProfesionalForm() {
                 />
               </div>
               <div className="col-md-4">
-                <button type="button" className="btn btn-danger" onClick={() => {
-                  const certificacion = newProfesional.certificacionProfesional.filter((_, i) => i !== index);
-                  setNewProfesional({ ...newProfesional, certificacionProfesional: certificacion });
-                }}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => {
+                    const certificacion = newProfesional.certificacionProfesional.filter((_, i) => i !== index);
+                    setNewProfesional({ ...newProfesional, certificacionProfesional: certificacion });
+                  }}
+                >
                   Eliminar
                 </button>
               </div>
@@ -720,10 +774,14 @@ function ProfesionalForm() {
         {/* Referencias */}
         <div className="col-12">
           <h5>Referencias</h5>
-          <button type="button" className="btn btn-secondary" onClick={() => {
-            const nuevaReferencia = { cargo: "", empresa: "", nombreReferente: "", relacionCandidato: "", telefonoContacto: "" };
-            setNewProfesional({ ...newProfesional, referenciaProfesional: [...newProfesional.referenciaProfesional, nuevaReferencia] });
-          }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              const nuevaReferencia = { cargo: "", empresa: "", nombreReferente: "", relacionCandidato: "", telefonoContacto: "" };
+              setNewProfesional({ ...newProfesional, referenciaProfesional: [...newProfesional.referenciaProfesional, nuevaReferencia] });
+            }}
+          >
             Agregar Referencia
           </button>
           {newProfesional.referenciaProfesional.map((item, index) => (
@@ -794,10 +852,14 @@ function ProfesionalForm() {
                 />
               </div>
               <div className="col-md-4">
-                <button type="button" className="btn btn-danger" onClick={() => {
-                  const referencia = newProfesional.referenciaProfesional.filter((_, i) => i !== index);
-                  setNewProfesional({ ...newProfesional, referenciaProfesional: referencia });
-                }}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => {
+                    const referencia = newProfesional.referenciaProfesional.filter((_, i) => i !== index);
+                    setNewProfesional({ ...newProfesional, referenciaProfesional: referencia });
+                  }}
+                >
                   Eliminar
                 </button>
               </div>
@@ -808,10 +870,14 @@ function ProfesionalForm() {
         {/* Proyectos */}
         <div className="col-12">
           <h5>Proyectos</h5>
-          <button type="button" className="btn btn-secondary" onClick={() => {
-            const nuevoProyecto = { nombre: "", descripcion: "", fechaInicio: "", fechaFin: "" };
-            setNewProfesional({ ...newProfesional, proyectos: [...newProfesional.proyectos, nuevoProyecto] });
-          }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              const nuevoProyecto = { nombre: "", descripcion: "", fechaInicio: "", fechaFin: "" };
+              setNewProfesional({ ...newProfesional, proyectos: [...newProfesional.proyectos, nuevoProyecto] });
+            }}
+          >
             Agregar Proyecto
           </button>
           {newProfesional.proyectos.map((item, index) => (
@@ -869,10 +935,14 @@ function ProfesionalForm() {
                 />
               </div>
               <div className="col-md-4">
-                <button type="button" className="btn btn-danger" onClick={() => {
-                  const proyectos = newProfesional.proyectos.filter((_, i) => i !== index);
-                  setNewProfesional({ ...newProfesional, proyectos });
-                }}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => {
+                    const proyectos = newProfesional.proyectos.filter((_, i) => i !== index);
+                    setNewProfesional({ ...newProfesional, proyectos });
+                  }}
+                >
                   Eliminar
                 </button>
               </div>
@@ -928,10 +998,17 @@ function ProfesionalForm() {
                   <strong>Nivel de Experiencia:</strong> {profesional.nivelExperiencia} <br />
                   <strong>Fecha de Ingreso a Getronics:</strong> {profesional.fechaIngresoGetronics} <br />
                   <strong>Fecha de Egreso de Getronics:</strong> {profesional.fechaEgresoGetronics} <br />
-                  <strong>Fotografía:</strong> <img src={`data:image/png;base64,${profesional.fotografia}`} alt="Fotografía" style={{ width: '50px', height: '50px', borderRadius: '50%' }} /><br />
+                  <strong>Fotografía:</strong>{" "}
+                  <img
+                    src={`data:image/png;base64,${profesional.fotografia}`}
+                    alt="Fotografía"
+                    style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+                  />
+                  <br />
                   <strong>Estado Profesional:</strong> {profesional.estadoProfesional === 1 ? "Activo" : "Inactivo"} <br />
                   <strong>Referido:</strong> {profesional.referido ? "Sí" : "No"} <br />
-                  <strong>Jefe de Servicio:</strong> {profesional.jefeServicio.nombre || "No especificado"} ({profesional.jefeServicio.cargo || "No especificado"})<br />
+                  <strong>Jefe de Servicio:</strong> {profesional.jefeServicio.nombre || "No especificado"} (
+                  {profesional.jefeServicio.cargo || "No especificado"})<br />
                   <strong>Conocimientos Profesionales:</strong>
                   <ul>
                     {profesional.conocimientoProfesional.map((conocimiento, idx) => (
@@ -941,19 +1018,25 @@ function ProfesionalForm() {
                   <strong>Formación Académica:</strong>
                   <ul>
                     {profesional.formacionAcademicaProfesional.map((formacion, idx) => (
-                      <li key={idx}>{formacion.carrera} en {formacion.institucion} ({formacion.anioInicio} - {formacion.anioFin})</li>
+                      <li key={idx}>
+                        {formacion.carrera} en {formacion.institucion} ({formacion.anioInicio} - {formacion.anioFin})
+                      </li>
                     ))}
                   </ul>
                   <strong>Idiomas:</strong>
                   <ul>
                     {profesional.idiomasProfesional.map((idioma, idx) => (
-                      <li key={idx}>{idioma.nombre} - Nivel: {idioma.nivelDominio}</li>
+                      <li key={idx}>
+                        {idioma.nombre} - Nivel: {idioma.nivelDominio}
+                      </li>
                     ))}
                   </ul>
                   <strong>Experiencia Laboral:</strong>
                   <ul>
                     {profesional.experienciaLaboralProfesional.map((experiencia, idx) => (
-                      <li key={idx}>{experiencia.cargo} en {experiencia.empresa}</li>
+                      <li key={idx}>
+                        {experiencia.cargo} en {experiencia.empresa}
+                      </li>
                     ))}
                   </ul>
                   <strong>Certificaciones:</strong>
@@ -968,7 +1051,9 @@ function ProfesionalForm() {
                   <strong>Referencias:</strong>
                   <ul>
                     {profesional.referenciaProfesional.map((referencia, idx) => (
-                      <li key={idx}>{referencia.nombreReferente} ({referencia.cargo})</li>
+                      <li key={idx}>
+                        {referencia.nombreReferente} ({referencia.cargo})
+                      </li>
                     ))}
                   </ul>
                   <strong>Proyectos:</strong>
@@ -986,7 +1071,7 @@ function ProfesionalForm() {
 
       {/* Modal de Error */}
       {errorModal.show && (
-        <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1" role="dialog">
+        <div className="modal fade show" style={{ display: "block" }} tabIndex="-1" role="dialog">
           <div className="modal-dialog" role="document">
             <div className="modal-content">
               <div className="modal-header">

@@ -39,7 +39,7 @@ function Login({ setIsAuthenticated }) {
         "http://localhost:8080/realms/g-manager-realm-dev/protocol/openid-connect/token",
         new URLSearchParams({
           client_id: "gestor-conocimiento-client-front",
-          client_secret: "TkfMAYacpja8xr9GGh19kR9fiv5bi1dT",
+          client_secret: "eT5FtxvIdu23LXixk7zC7eDjqyHaaTk9",
           grant_type: "password",
           username: credentials.username,
           password: credentials.password,

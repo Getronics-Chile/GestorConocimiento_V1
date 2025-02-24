@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { validate, clean, format } from "rut.js";
 
 const APIURL = "http://localhost:8000";
 
@@ -80,27 +81,31 @@ function ClienteForm() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "rut") {
-      setRut(value);
-      if (!validateRut(value)) {
-        setError("RUT inválido");
+      let { name, value } = e.target;
+  
+      // Formatear el RUT automáticamente
+      const cleanRut = clean(value); // Quita puntos y guion
+      const formattedRut = format(cleanRut); // Agrega el guion antes del dígito verificador
+  
+      setNewCliente((prev) => ({ ...prev, [name]: formattedRut }));
+  
+      // Validar RUT en tiempo real
+      if (cleanRut && !validate(cleanRut)) {
+        setError("❌ RUT inválido");
       } else {
         setError("");
       }
-    }
-    setNewCliente({ ...newCliente, [name]: value });
-  };
+    };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!validateRut(newCliente.rut)) {
-      setError("RUT inválido");
-      rutRef.current.scrollIntoView({ behavior: "smooth" });
-      return;
-    }
-    addOrUpdateCliente();
-  };
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!validateRut(newCliente.rut)) {
+          setError("RUT inválido");
+          rutRef.current.scrollIntoView({ behavior: "smooth" });
+          return;
+        }
+        addOrUpdateCliente();
+      };
 
   // Seleccionar un cliente para editar
   const editCliente = (cliente) => {
@@ -135,7 +140,7 @@ function ClienteForm() {
             onChange={handleInputChange}
             ref={rutRef}
           />
-          {error && <span style={{ color: "red" }}>{error}</span>}
+          {error && <span style={{ color: "red", display: "block", marginTop: "5px" }}>{error}</span>}
         </div>
 
         <div className="col-md-4">
